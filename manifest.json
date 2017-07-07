@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+
+  "name": "Nimiq Wallet",
+  "description": "Manage your Nimiq wallet directly in your browser",
+  "version": "0.1.0",
+
+  "background": {
+    "page": "background.html"
+  },
+  "sandbox": {
+    "pages": ["sandbox.html"]
+  },
+
+  "browser_action": {
+    "default_icon": "nimiq-wallet-icon.png",
+    "default_popup": "popup.html"
+  },
+  "incognito": "split",
+  "content_security_policy": "script-src 'self' https://cdn.nimiq.com; object-src 'self'",
+  "permissions": [
+    "unlimitedStorage"
+  ]
+}

@@ -1,0 +1,41 @@
+<script>
+    // Test functions from https://github.com/nimiq-network/core/blob/master/src/main/platform/browser/Nimiq.js
+    var Nimiq = {
+        _hasNativeClassSupport: function() {
+            try {
+                eval('"use strict"; class A{}'); // eslint-disable-line no-eval
+                return true;
+            } catch (err) {
+                return false;
+            }
+        },
+
+        _hasAsyncAwaitSupport: function() {
+            try {
+                eval('"use strict"; (async function() { await {}; })()'); // eslint-disable-line no-eval
+                return true;
+            } catch (err) {
+                return false;
+            }
+        },
+
+        _hasProperScoping: function() {
+            try {
+                eval('"use strict"; class a{ a() { const a = 0; } }'); // eslint-disable-line no-eval
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    // Set up message event handler:
+    window.addEventListener('message', function(event) {
+      var command = event.data.command;
+
+      event.source.postMessage({
+        command: command,
+        result: Nimiq[command]()
+      }, event.origin);
+    });
+</script>
