@@ -1,3 +1,5 @@
+/* jshint esversion: 6 */
+
 var $sandbox = document.getElementById('sandbox');
 
 // Overwrite test functions that use eval to route the tests into the sandbox
@@ -61,17 +63,22 @@ var state = {
     hashrate: 0
 };
 
+function updateState(update) {
+    Object.assign(state, update);
+    chrome.runtime.sendMessage(update);
+}
+
 function _onConsensusEstablished() {
     console.log('Consensus established');
-    state.status = 'Consensus established';
-    state.targetHeight = 0;
+    updateState({status: 'Consensus established'});
+    updateState({targetHeight: 0});
 
     // Get current balance and initiate listener.
     $.accounts.getBalance($.wallet.address).then(balance => _onBalanceChanged(balance));
     $.accounts.on($.wallet.address, account => _onBalanceChanged(account.balance));
 
     console.log('Your address: ' + $.wallet.address.toHex());
-    state.address = $.wallet.address.toHex();
+    updateState({address: $.wallet.address.toHex()});
 
     // If we want to start mining.
     // $.miner.startWork();
@@ -79,35 +86,35 @@ function _onConsensusEstablished() {
 
 function _onConsensusLost() {
     console.log('Consensus lost');
-    state.status = 'Consensus lost';
+    updateState({status: 'Consensus lost'});
     stopMining();
 }
 
 function startMining() {
     if($.consensus.established) {
         $.miner.startWork();
-        state.mining = $.miner.working;
+        updateState({mining: $.miner.working});
     }
 }
 
 function stopMining() {
     $.miner.stopWork();
-    state.mining = $.miner.working;
+    updateState({mining: $.miner.working});
 }
 
 function _onBalanceChanged(newBalance) {
     console.log(`Balance is ${Nimiq.Policy.satoshisToCoins(newBalance.value)}.`);
-    state.balance = Nimiq.Policy.satoshisToCoins(newBalance.value);
+    updateState({balance: Nimiq.Policy.satoshisToCoins(newBalance.value)});
 }
 
 function _onHeadChanged() {
     console.log(`Now at height #${$.blockchain.height}.`);
-    state.height = $.blockchain.height;
+    updateState({height: $.blockchain.height});
 }
 
 function _onPeersChanged() {
     console.log(`Connected to ${$.network.peerCount} peers (WebSocket: ${$.network.peerCountWebSocket}, WebRTC: ${$.network.peerCountWebRtc})`);
-    state.peers = $.network.peerCount
+    updateState({peers: $.network.peerCount});
 }
 
 Nimiq.init($ => {
@@ -115,13 +122,19 @@ Nimiq.init($ => {
 
     window.$ = $;
 
-    $.consensus.on('sync', (targetHeight) => { state.status = 'Syncing'; state.targetHeight = targetHeight; });
+    $.consensus.on('sync', (targetHeight) => {
+        updateState({status: 'Syncing'});
+        updateState({targetHeight: targetHeight});
+    });
     $.consensus.on('established', () => _onConsensusEstablished());
     $.consensus.on('lost', () => _onConsensusLost());
 
     $.blockchain.on('head-changed', () => _onHeadChanged());
+    _onHeadChanged();
 
-    $.miner.on('hashrate-changed', () => { state.hashrate = $.miner.hashrate; });
+    $.miner.on('hashrate-changed', () => {
+        updateState({hashrate: $.miner.hashrate});
+    });
 
     $.network.on('peers-changed', () => _onPeersChanged());
 
@@ -129,3 +142,10 @@ Nimiq.init($ => {
 }, function(error) {
     console.error(error);
 });
+
+
+function messageReceived(msg) {
+    console.log("message received:", msg);
+}
+
+chrome.runtime.onMessage.addListener(messageReceived);
