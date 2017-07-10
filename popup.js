@@ -15,7 +15,8 @@ var $buttonStart         = document.getElementById('button-start'),
     $buttonStartMining   = document.getElementById('button-start-mining'),
     $buttonStopMining    = document.getElementById('button-stop-mining'),
     $inputPrivKey        = document.getElementById('input-privKey'),
-    $buttonImportPrivKey = document.getElementById('button-import-privKey');
+    $buttonImportPrivKey = document.getElementById('button-import-privKey'),
+    $buttonImportBetanet = document.getElementById('button-import-betanet');
 
 // Set up initial values
 var bgPage = chrome.extension.getBackgroundPage(),
@@ -78,4 +79,16 @@ $walletList.addEventListener('click', e => {
     if(e.target.matches('button')) {
         bgPage.switchWallet(e.target.getAttribute('data-wallet'));
     }
+});
+$buttonImportBetanet.addEventListener('click', e => {
+    chrome.tabs.query({active: true}, tabs => {
+        var tab = tabs[0];
+        if(tab.url === 'https://nimiq.com/betanet/') {
+            console.log("run $.wallet.dump() in the page context");
+            chrome.tabs.executeScript({code:"$.wallet.dump()"});
+        }
+        else {
+            console.log("Navigate to https://nimiq.com/betanet and try again.");
+        }
+    });
 });
