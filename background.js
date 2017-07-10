@@ -58,7 +58,7 @@ var state = {
     peers: 0,
     balance: 0,
     address: '',
-    status: 'Connecting',
+    status: 'Not connected',
     mining: false,
     hashrate: 0
 };
@@ -117,35 +117,99 @@ function _onPeersChanged() {
     updateState({peers: $.network.peerCount});
 }
 
-Nimiq.init($ => {
-    console.log('Nimiq loaded. Connecting and establishing consensus.');
+function start(params) {
+    updateState({status: 'Connecting'});
 
-    window.$ = $;
+    var defaults = {};
 
-    $.consensus.on('sync', (targetHeight) => {
-        updateState({status: 'Syncing'});
-        updateState({targetHeight: targetHeight});
-    });
-    $.consensus.on('established', () => _onConsensusEstablished());
-    $.consensus.on('lost', () => _onConsensusLost());
+    var options = Object.assign({}, defaults, params);
 
-    $.blockchain.on('head-changed', () => _onHeadChanged());
-    _onHeadChanged();
+    Nimiq.init($ => {
+        console.log('Nimiq loaded. Connecting and establishing consensus.');
 
-    $.miner.on('hashrate-changed', () => {
-        updateState({hashrate: $.miner.hashrate});
-    });
+        window.$ = $;
 
-    $.network.on('peers-changed', () => _onPeersChanged());
+        $.consensus.on('sync', (targetHeight) => {
+            updateState({status: 'Syncing'});
+            updateState({targetHeight: targetHeight});
+        });
+        $.consensus.on('established', () => _onConsensusEstablished());
+        $.consensus.on('lost', () => _onConsensusLost());
 
-    $.network.connect();
-}, function(error) {
-    console.error(error);
-});
+        $.blockchain.on('head-changed', () => _onHeadChanged());
+        _onHeadChanged();
 
+        $.miner.on('hashrate-changed', () => {
+            updateState({hashrate: $.miner.hashrate});
+        });
+
+        $.network.on('peers-changed', () => _onPeersChanged());
+
+        $.network.connect();
+    }, function(error) {
+        updateState({status: 'Not connected'});
+        console.error(error);
+    }, options);
+}
 
 function messageReceived(msg) {
     console.log("message received:", msg);
 }
-
 chrome.runtime.onMessage.addListener(messageReceived);
+
+var store = chrome.storage.local;
+
+store.get('active', function(items) {
+    console.log(items);
+    var active = items.active;
+    if(active) {
+        store.get('wallets', function(items) {
+            console.log(items);
+            var wallets = items.wallets;
+            var privKey = wallets[active];
+            console.log("store.wallets." + active, privKey);
+            start({walletseed: privKey});
+        });
+    }
+});
+
+// Storage schema
+// {
+//     active: '<address>',
+//     wallets: {
+//         '<address>': '<privateKey>',
+//         '<address>': '<privateKey>'
+//     }
+// };
+function writeStoreSchema() {
+    // TODO Save-guard against overwriting existing data
+
+    var schema = {
+        active: null,
+        wallets: {}
+    };
+
+    store.set(schema, function() {
+        if(chrome.runtime.lastError) console.log(runtime.lastError);
+        else console.log("Schema stored");
+    });
+}
+
+function storeWallet(address, privKey, activate) {
+    store.get('wallets', function(items) {
+        console.log(items);
+
+        var wallets = items.wallets;
+        wallets[address] = privKey;
+
+        store.set({wallets: wallets}, function() {
+            if(chrome.runtime.lastError) console.log(runtime.lastError);
+            else if(activate)
+                store.set({active: address}, function() {
+                    if(chrome.runtime.lastError) console.log(runtime.lastError);
+                    else console.log("Stored and activated", address);
+                });
+            else console.log("Stored", address);
+        });
+    });
+}
