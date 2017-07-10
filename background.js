@@ -9,7 +9,7 @@ Nimiq._hasNativeClassSupport = async function() {
     };
     $sandbox.contentWindow.postMessage(message, '*');
 
-    return await new Promise(function(resolve, reject){
+    return await new Promise(function(resolve, reject) {
         window.addEventListener('message', function(event) {
             if (event.data.command === message.command) {
                 resolve(event.data.result);
@@ -24,7 +24,7 @@ Nimiq._hasAsyncAwaitSupport = async function() {
     };
     $sandbox.contentWindow.postMessage(message, '*');
 
-    return await new Promise(function(resolve, reject){
+    return await new Promise(function(resolve, reject) {
         window.addEventListener('message', function(event) {
             if (event.data.command === message.command) {
                 resolve(event.data.result);
@@ -39,7 +39,7 @@ Nimiq._hasProperScoping = async function() {
     };
     $sandbox.contentWindow.postMessage(message, '*');
 
-    return await new Promise(function(resolve, reject){
+    return await new Promise(function(resolve, reject) {
         window.addEventListener('message', function(event) {
             if (event.data.command === message.command) {
                 resolve(event.data.result);
@@ -161,6 +161,11 @@ chrome.runtime.onMessage.addListener(messageReceived);
 var store = chrome.storage.local;
 
 function start() {
+    if(Nimiq._core) {
+        console.log('Nimiq is already running. stop() first.');
+        return false;
+    }
+
     store.get('active', function(items) {
         console.log(items);
         var active = items.active;
@@ -218,23 +223,56 @@ function writeStoreSchema() {
 }
 
 async function importPrivateKey(privKey, activate) {
+    // TODO Validate privKey format
+
     var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
         address = address.toHex();
 
-    store.get('wallets', function(items) {
-        console.log(items);
+    return await new Promise(function(resolve, reject) {
+        store.get('wallets', function(items) {
+            console.log(items);
 
-        var wallets = items.wallets;
-        wallets[address] = privKey;
+            var wallets = items.wallets;
+            wallets[address] = privKey;
 
-        store.set({wallets: wallets}, function() {
-            if(chrome.runtime.lastError) console.log(runtime.lastError);
-            else if(activate)
-                store.set({active: address}, function() {
-                    if(chrome.runtime.lastError) console.log(runtime.lastError);
-                    else console.log("Stored and activated", address);
-                });
-            else console.log("Stored", address);
+            store.set({wallets: wallets}, function() {
+                if(chrome.runtime.lastError) console.log(runtime.lastError);
+                else if(activate)
+                    store.set({active: address}, function() {
+                        if(chrome.runtime.lastError) console.log(runtime.lastError);
+                        else {
+                            console.log("Stored and activated", address);
+                            resolve();
+                        }
+                    });
+                else {
+                    console.log("Stored", address);
+                    resolve();
+                }
+            });
         });
+    });
+}
+
+async function listWallets() {
+    var wallets = await new Promise(function(resolve, reject) {
+        store.get('wallets', function(items) {
+            resolve(items.wallets);
+        });
+    });
+
+    // TODO Include balance in the returned list
+
+    return Object.keys(wallets);
+}
+
+function switchWallet(address) {
+    store.set({active: address}, function() {
+        if(chrome.runtime.lastError) console.log(runtime.lastError);
+        else {
+            console.log("Stored and activated", address);
+            stop();
+            start();
+        }
     });
 }

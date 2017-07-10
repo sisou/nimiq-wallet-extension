@@ -11,25 +11,41 @@ value "popup.html".
         body {
             font-family: sans-serif;
             font-size: 100%;
+            width: 420px;
         }
-        #status {
-            /* avoid an excessively wide status text */
-            white-space: pre;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            max-width: 400px;
+
+        #address,
+        ul {
+            font-family: monospace;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
+    <h1>My Nimiq Wallet</h1>
+
     Address: <span id="address"></span><br>
     Balance: <span id="balance"></span><br>
+    <hr>
     Status: <span id="status"></span><br>
     Height: <span id="height"></span><br>
     Target height: <span id="targetHeight"></span><br>
     Peers: <span id="peers"></span><br>
+    <hr>
     Mining: <span id="mining"></span><br>
     Hashrate: <span id="hashrate"></span><br>
+    <hr>
+    <strong>Your wallets</strong>
+    <div id="wallet-list"></div>
+    <hr>
+    <button id="button-start">Start Runtime</button>
+    <button id="button-stop">Stop Runtime</button>
+    <br>
+    <button id="button-start-mining">Start Mining</button>
+    <button id="button-stop-mining">Stop Mining</button>
+    <br>
+    <input type="text" id="input-privKey">
+    <button id="button-import-privKey">Import Private Key</button>
 
     <script src="popup.js"></script>
 </body>

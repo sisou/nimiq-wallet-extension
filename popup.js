@@ -6,10 +6,20 @@ var $address      = document.getElementById('address'),
     $targetHeight = document.getElementById('targetHeight'),
     $peers        = document.getElementById('peers'),
     $mining       = document.getElementById('mining'),
-    $hashrate     = document.getElementById('hashrate');
+    $hashrate     = document.getElementById('hashrate'),
+    $walletList   = document.getElementById('wallet-list');
+
+// Cache all input elements
+var $buttonStart         = document.getElementById('button-start'),
+    $buttonStop          = document.getElementById('button-stop'),
+    $buttonStartMining   = document.getElementById('button-start-mining'),
+    $buttonStopMining    = document.getElementById('button-stop-mining'),
+    $inputPrivKey        = document.getElementById('input-privKey'),
+    $buttonImportPrivKey = document.getElementById('button-import-privKey');
 
 // Set up initial values
-state = chrome.extension.getBackgroundPage().state;
+var bgPage = chrome.extension.getBackgroundPage(),
+    state  = bgPage.state;
 
 $address.innerText      = state.address;
 $balance.innerText      = state.balance;
@@ -20,13 +30,30 @@ $peers.innerText        = state.peers;
 $mining.innerText       = state.mining;
 $hashrate.innerText     = state.hashrate;
 
+async function updateWalletList() {
+    var wallets = await bgPage.listWallets();
+
+    var html = '<ul>';
+
+    for(let wallet of wallets) {
+        let walletHTML = wallet;
+        if(wallet === state.address) walletHTML = '<strong>' + wallet + '</strong>';
+        html += '<li>' + walletHTML + ' <button data-wallet="' + wallet + '">Use</button></li>';
+    }
+
+    html += '</ul>';
+
+    $walletList.innerHTML = html;
+}
+updateWalletList();
+
 // Listen for updates from the background script
 function messageReceived(update) {
     console.log("message received:", update);
     Object.assign(state, update);
 
     switch(Object.keys(update)[0]) {
-        case 'address':      $address.innerText      = state.address;      break;
+        case 'address':      $address.innerText      = state.address; updateWalletList(); break;
         case 'balance':      $balance.innerText      = state.balance;      break;
         case 'status':       $status.innerText       = state.status;       break;
         case 'height':       $height.innerText       = state.height;       break;
@@ -37,3 +64,18 @@ function messageReceived(update) {
     }
 }
 chrome.runtime.onMessage.addListener(messageReceived);
+
+// Attach input listeners
+$buttonStart.addEventListener('click', bgPage.start);
+$buttonStop.addEventListener('click', bgPage.stop);
+$buttonStartMining.addEventListener('click', bgPage.startMining);
+$buttonStopMining.addEventListener('click', bgPage.stopMining);
+$buttonImportPrivKey.addEventListener('click', async e => {
+    await bgPage.importPrivateKey($inputPrivKey.value);
+    updateWalletList();
+});
+$walletList.addEventListener('click', e => {
+    if(e.target.matches('button')) {
+        bgPage.switchWallet(e.target.getAttribute('data-wallet'));
+    }
+});
