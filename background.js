@@ -56,7 +56,7 @@ var state = {
     height: 0,
     targetHeight: 0,
     peers: 0,
-    balance: 0,
+    balance: 'loading...',
     address: '',
     status: 'Not connected',
     mining: false,
@@ -76,9 +76,6 @@ function _onConsensusEstablished() {
     // Get current balance and initiate listener.
     $.accounts.getBalance($.wallet.address).then(balance => _onBalanceChanged(balance));
     $.accounts.on($.wallet.address, account => _onBalanceChanged(account.balance));
-
-    console.log('Your address: ' + $.wallet.address.toHex());
-    updateState({address: $.wallet.address.toHex()});
 
     // If we want to start mining.
     // $.miner.startWork();
@@ -129,8 +126,11 @@ function start(params) {
 
         window.$ = $;
 
-        $.consensus.on('sync', (targetHeight) => {
-            updateState({status: 'Syncing'});
+        console.log('Your address: ' + $.wallet.address.toHex());
+        updateState({address: $.wallet.address.toHex()});
+
+        $.consensus.on('syncing', (targetHeight) => {
+            updateState({status: 'Syncing', targetHeight});
             updateState({targetHeight: targetHeight});
         });
         $.consensus.on('established', () => _onConsensusEstablished());
