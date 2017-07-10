@@ -97,6 +97,7 @@ function startMining() {
 function stopMining() {
     $.miner.stopWork();
     updateState({mining: $.miner.working});
+    updateState({hashrate: 0});
 }
 
 function _onBalanceChanged(newBalance) {
@@ -114,7 +115,7 @@ function _onPeersChanged() {
     updateState({peers: $.network.peerCount});
 }
 
-function start(params) {
+function startNimiq(params) {
     updateState({status: 'Connecting'});
 
     var defaults = {};
@@ -159,19 +160,40 @@ chrome.runtime.onMessage.addListener(messageReceived);
 
 var store = chrome.storage.local;
 
-store.get('active', function(items) {
-    console.log(items);
-    var active = items.active;
-    if(active) {
-        store.get('wallets', function(items) {
-            console.log(items);
-            var wallets = items.wallets;
-            var privKey = wallets[active];
-            console.log("store.wallets." + active, privKey);
-            start({walletseed: privKey});
-        });
-    }
-});
+function start() {
+    store.get('active', function(items) {
+        console.log(items);
+        var active = items.active;
+
+        if(typeof active === 'undefined') {
+            // Storage schema is not yet set
+            writeStoreSchema();
+            start();
+            return;
+        }
+
+        if(active) {
+            store.get('wallets', function(items) {
+                console.log(items);
+                var wallets = items.wallets;
+                var privKey = wallets[active];
+                console.log("store.wallets." + active, privKey);
+                startNimiq({walletSeed: privKey});
+            });
+        }
+        else {
+            // Start basic Nimiq runtime to be able to access Nimiq subclasses
+            Nimiq.init(() => {}, error => { console.error(error); });
+        }
+    });
+}
+start();
+
+function stop() {
+    $.network.disconnect();
+    Nimiq._core = null;
+    $ = null;
+}
 
 // Storage schema
 // {
@@ -195,7 +217,10 @@ function writeStoreSchema() {
     });
 }
 
-function storeWallet(address, privKey, activate) {
+async function importPrivateKey(privKey, activate) {
+    var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
+        address = address.toHex();
+
     store.get('wallets', function(items) {
         console.log(items);
 
