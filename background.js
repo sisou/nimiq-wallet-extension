@@ -162,7 +162,7 @@ var store = chrome.storage.local;
 
 function start() {
     if(Nimiq._core) {
-        console.log('Nimiq is already running. stop() first.');
+        console.error('Nimiq is already running. stop() first.');
         return false;
     }
 
