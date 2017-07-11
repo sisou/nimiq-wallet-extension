@@ -84,11 +84,12 @@ $buttonImportBetanet.addEventListener('click', e => {
     chrome.tabs.query({active: true}, tabs => {
         var tab = tabs[0];
         if(tab.url === 'https://nimiq.com/betanet/') {
-            console.log("run $.wallet.dump() in the page context");
-            chrome.tabs.executeScript({code:"$.wallet.dump()"});
+            // console.log("run $.wallet.dump() in the page context");
+            var key = chrome.tabs.executeScript({file: "extract_betanet_key.js"});
+            console.log("key", key);
         }
         else {
-            console.log("Navigate to https://nimiq.com/betanet and try again.");
+            window.open('https://nimiq.com/betanet','_newtab');
         }
     });
 });
