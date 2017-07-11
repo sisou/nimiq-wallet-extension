@@ -44,7 +44,9 @@ async function updateWalletList() {
         html += '<li>';
         html += '<input type="text" value="' + wallets[address].name + '" id="' + address + '-name">';
         html += '<button data-wallet="' + address + '" class="update-name">Edit</button> ';
-        html += '<button data-wallet="' + address + '" class="use-wallet">Use</button><br>';
+        html += '<button data-wallet="' + address + '" class="use-wallet">Use</button> ';
+        if(state.address && state.address !== address)
+            html += '<button data-wallet="' + address + '" class="remove-wallet">Remove</button><br>';
         html += '<hash>' + addressHMTL + '</hash><br>';
         html += 'Balance: ' + wallets[address].balance;
         html += '</li>';
@@ -103,6 +105,11 @@ async function createNewWallet() {
     updateWalletList();
 }
 
+async function removeWallet(address) {
+    await bgPage.removeWallet(address);
+    updateWalletList();
+}
+
 // Attach input listeners
 $buttonStartMining.addEventListener('click', bgPage.startMining);
 $buttonStopMining.addEventListener('click', bgPage.stopMining);
@@ -116,6 +123,10 @@ $walletList.addEventListener('click', e => {
         var address = e.target.getAttribute('data-wallet');
         var name = document.getElementById(address + '-name').value;
         updateName(address, name);
+    }
+    else if(e.target.matches('button.remove-wallet')) {
+        var address = e.target.getAttribute('data-wallet');
+        removeWallet(address);
     }
 });
 

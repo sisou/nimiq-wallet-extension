@@ -325,3 +325,22 @@ async function createNewWallet() {
     var wallet = await Nimiq.Wallet.createVolatile();
     return await importPrivateKey(wallet.dump());
 }
+
+async function removeWallet(address) {
+    return await new Promise(function(resolve, reject) {
+        store.get('wallets', function(items) {
+            console.log(items);
+
+            var wallets = items.wallets;
+            delete wallets[address];
+
+            store.set({wallets: wallets}, function() {
+                if(chrome.runtime.lastError) console.log(runtime.lastError);
+                else {
+                    console.log("Removed wallet", address);
+                    resolve();
+                }
+            });
+        });
+    });
+}
