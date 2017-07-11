@@ -19,10 +19,14 @@ value "popup.html".
             font-family: monospace;
             text-transform: uppercase;
         }
+
+        li {
+            margin-bottom: 0.5em;
+        }
     </style>
 </head>
 <body>
-    <h1>My Nimiq Wallet</h1>
+    <h1>Nimiq Wallet Manager</h1>
 
     Address: <span id="address"></span><br>
     Balance: <span id="balance"></span><br>
@@ -37,7 +41,7 @@ value "popup.html".
     <button id="button-start-mining">Start Mining</button>
     <button id="button-stop-mining">Stop Mining</button>
     <hr>
-    <strong>Your wallets</strong>
+    <strong>My wallets</strong>
     <div id="wallet-list"></div>
     <hr>
     <input type="text" id="input-privKey">

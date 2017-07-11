@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
 
-  "name": "Nimiq Wallet",
-  "description": "Manage your Nimiq wallet directly in your browser",
+  "name": "Nimiq Wallet Manager",
+  "description": "Manage your Nimiq wallets directly in your browser.",
   "version": "0.1.0",
 
   "background": {
