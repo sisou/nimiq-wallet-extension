@@ -195,6 +195,7 @@ function _start() {
 _start();
 
 function _stop() {
+    $.miner.stopWork();
     $.network.disconnect();
     Nimiq._core = null;
     $ = null;
@@ -230,7 +231,7 @@ function writeStoreSchema() {
     });
 }
 
-async function importPrivateKey(privKey, name, activate) {
+async function importPrivateKey(privKey, name) {
     // TODO Validate privKey format
 
     var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
@@ -243,6 +244,10 @@ async function importPrivateKey(privKey, name, activate) {
             console.log(items);
 
             var wallets = items.wallets;
+
+            // If this is the first wallet created, activate it
+            var activate = Object.keys(wallets).length === 0;
+
             wallets[address] = {
                 name: name,
                 key: privKey
@@ -255,6 +260,7 @@ async function importPrivateKey(privKey, name, activate) {
                         if(chrome.runtime.lastError) console.log(runtime.lastError);
                         else {
                             console.log("Stored and activated", address);
+                            switchWallet(address);
                             resolve();
                         }
                     });
