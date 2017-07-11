@@ -1,34 +1,45 @@
+/* jshint esversion: 6 */
+
 // Cache all document node pointers
-var $address      = document.getElementById('address'),
-    $balance      = document.getElementById('balance'),
-    $status       = document.getElementById('status'),
-    $height       = document.getElementById('height'),
-    $targetHeight = document.getElementById('targetHeight'),
-    $peers        = document.getElementById('peers'),
-    $mining       = document.getElementById('mining'),
-    $hashrate     = document.getElementById('hashrate'),
-    $walletList   = document.getElementById('wallet-list');
+var $address          = document.getElementById('address'),
+    $balance          = document.getElementById('balance'),
+    $status           = document.getElementById('status'),
+    $height           = document.getElementById('height'),
+    $targetHeight     = document.getElementById('targetHeight'),
+    $peers            = document.getElementById('peers'),
+    $mining           = document.getElementById('mining'),
+    $hashrate         = document.getElementById('hashrate'),
+    $walletManagement = document.getElementById('wallet-management'),
+    $walletImport     = document.getElementById('wallet-import'),
+    $walletList       = document.getElementById('wallet-list');
 
 // Cache all input elements
-var $buttonStartMining   = document.getElementById('button-start-mining'),
-    $buttonStopMining    = document.getElementById('button-stop-mining'),
-    $inputPrivKey        = document.getElementById('input-privKey'),
-    $buttonImportPrivKey = document.getElementById('button-import-privKey'),
-    $buttonImportBetanet = document.getElementById('button-import-betanet'),
-    $buttonNewWallet     = document.getElementById('button-create-new-wallet');
+var $buttonStartMining        = document.getElementById('button-start-mining'),
+    $buttonStopMining         = document.getElementById('button-stop-mining'),
+    $buttonShowMyWallets      = document.getElementById('button-show-my-wallets'),
+    $buttonCloseMyWallets     = document.getElementById('button-close-my-wallets'),
+    $buttonShowImportWallets  = document.getElementById('button-show-import-wallets'),
+    $buttonCloseImportWallets = document.getElementById('button-close-import-wallets'),
+    $inputPrivKey             = document.getElementById('input-privKey'),
+    $buttonImportPrivKey      = document.getElementById('button-import-privKey'),
+    $buttonImportBetanet      = document.getElementById('button-import-betanet'),
+    $buttonNewWallet          = document.getElementById('button-create-new-wallet');
 
 // Set up initial values
 var bgPage = chrome.extension.getBackgroundPage(),
     state  = bgPage.state;
 
-$address.innerText      = state.address;
-$balance.innerText      = state.balance;
-$status.innerText       = state.status;
-$height.innerText       = state.height;
-$targetHeight.innerText = state.targetHeight;
-$peers.innerText        = state.peers;
-$mining.innerText       = state.mining;
-$hashrate.innerText     = state.hashrate;
+$buttonShowMyWallets.innerText = 'My Wallets (' + state.numberOfWallets + ')';
+$address.innerText         = state.address;
+$balance.innerText         = state.balance;
+$status.innerText          = state.status;
+$height.innerText          = state.height;
+$targetHeight.innerText    = state.targetHeight;
+$peers.innerText           = state.peers;
+$mining.innerText          = state.mining;
+$hashrate.innerText        = state.hashrate;
+
+if(state.numberOfWallets === 0) $walletImport.classList.add('show-instant');
 
 async function updateWalletList() {
     var wallets = await bgPage.listWallets();
@@ -77,6 +88,7 @@ function messageReceived(update) {
         Object.assign(state, update);
 
         switch(key) {
+            case 'numberOfWallets': $buttonShowMyWallets.innerText = 'My Wallets (' + state.numberOfWallets + ')'; break;
             case 'address':      $address.innerText      = state.address; updateWalletList(); break;
             case 'balance':      $balance.innerText      = state.balance;      break;
             case 'status':       $status.innerText       = state.status;  updateWalletList(); break;
@@ -114,30 +126,47 @@ async function removeWallet(address) {
 $buttonStartMining.addEventListener('click', bgPage.startMining);
 $buttonStopMining.addEventListener('click', bgPage.stopMining);
 
+$buttonShowMyWallets.addEventListener('click', e => {
+    $walletManagement.classList.add('show');
+});
+$buttonCloseMyWallets.addEventListener('click', e => {
+    $walletManagement.classList.remove('show');
+});
+
+$buttonShowImportWallets.addEventListener('click', e => {
+    $walletImport.classList.add('show');
+});
+$buttonCloseImportWallets.addEventListener('click', e => {
+    $walletImport.classList.remove('show', 'show-instant');
+});
+
 $walletList.addEventListener('click', e => {
     if(e.target.matches('button.use-wallet')) {
-        var address = e.target.getAttribute('data-wallet');
+        const address = e.target.getAttribute('data-wallet');
         bgPage.switchWallet(address);
+        $buttonCloseMyWallets.click();
     }
     else if(e.target.matches('button.update-name')) {
-        var address = e.target.getAttribute('data-wallet');
-        var name = document.getElementById(address + '-name').value;
+        const address = e.target.getAttribute('data-wallet');
+        const name = document.getElementById(address + '-name').value;
         updateName(address, name);
     }
     else if(e.target.matches('button.remove-wallet')) {
-        var address = e.target.getAttribute('data-wallet');
+        const address = e.target.getAttribute('data-wallet');
         removeWallet(address);
     }
 });
 
-$buttonImportPrivKey.addEventListener('click', async e => {
+$buttonImportPrivKey.addEventListener('click', e => {
     importPrivateKey($inputPrivKey.value);
+    $buttonCloseImportWallets.click();
 });
 $buttonImportBetanet.addEventListener('click', e => {
     chrome.tabs.query({active: true}, tabs => {
         var tab = tabs[0];
         if(tab.url === 'https://nimiq.com/betanet/') {
             chrome.tabs.executeScript({file: "extract_betanet_key.js"});
+            $buttonCloseImportWallets.click();
         }
         else {
             window.open('https://nimiq.com/betanet','_newtab');
@@ -146,4 +175,5 @@ $buttonImportBetanet.addEventListener('click', e => {
 });
 $buttonNewWallet.addEventListener('click', e => {
     createNewWallet();
+    $buttonCloseImportWallets.click();
 });

@@ -53,6 +53,7 @@ Nimiq._hasProperScoping = async function() {
 // #####################################################################################################################
 
 var state = {
+    numberOfWallets: 0,
     height: 0,
     targetHeight: 0,
     peers: 0,
@@ -181,6 +182,7 @@ function _start() {
             store.get('wallets', function(items) {
                 console.log(items);
                 var wallets = items.wallets;
+                updateState({numberOfWallets: Object.keys(wallets).length});
                 var privKey = wallets[active].key;
                 console.log("store.wallets." + active, privKey);
                 startNimiq({walletSeed: privKey});
@@ -261,11 +263,13 @@ async function importPrivateKey(privKey, name) {
                         else {
                             console.log("Stored and activated", address);
                             switchWallet(address);
+                            updateState({numberOfWallets: Object.keys(wallets).length});
                             resolve();
                         }
                     });
                 else {
                     console.log("Stored", address);
+                    updateState({numberOfWallets: Object.keys(wallets).length});
                     resolve();
                 }
             });
@@ -344,6 +348,7 @@ async function removeWallet(address) {
                 if(chrome.runtime.lastError) console.log(runtime.lastError);
                 else {
                     console.log("Removed wallet", address);
+                    updateState({numberOfWallets: Object.keys(wallets).length});
                     resolve();
                 }
             });

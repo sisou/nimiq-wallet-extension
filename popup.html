@@ -11,7 +11,9 @@ value "popup.html".
         body {
             font-family: sans-serif;
             font-size: 100%;
-            width: 420px;
+            width: 360px;
+            background: snow;
+            color: #042146;
         }
 
         #address,
@@ -22,6 +24,42 @@ value "popup.html".
 
         h1 {
             margin: 0.2em 0;
+        }
+
+        #wallet-management,
+        #wallet-import {
+            /*display: none;*/
+            width: 100%;
+            height: 100%;
+            background: snow;
+            position: absolute;
+            top: 110%;
+            left: 0;
+            transition: top 0.5s ease;
+            padding: 0.5em;
+            box-sizing: border-box;
+            box-shadow: 0 0 10px 0 gray;
+        }
+        #wallet-management.show,
+        #wallet-import.show {
+            top: 0;
+        }
+        #wallet-management.show-instant,
+        #wallet-import.show-instant {
+            transition: none;
+            top: 0;
+        }
+
+        button.full-width {
+            width: 100%;
+            padding: 0.5em 0;
+        }
+        button.close {
+            float: right;
+        }
+
+        #wallet-list ul {
+            padding-left: 1.5em;
         }
 
         li {
@@ -45,13 +83,24 @@ value "popup.html".
     <button id="button-start-mining">Start Mining</button>
     <button id="button-stop-mining">Stop Mining</button>
     <hr>
-    <strong>My wallets</strong>
-    <div id="wallet-list"></div>
-    <hr>
-    <input type="text" id="input-privKey">
-    <button id="button-import-privKey">Import Private Key</button><br>
-    <button id="button-import-betanet">Import from Betanet</button>
-    <button id="button-create-new-wallet">Create new Address</button>
+    <button id="button-show-my-wallets" class="full-width">My Wallets</button>
+
+    <div id="wallet-management">
+        <button id="button-close-my-wallets" class="close">&times;</button>
+        <strong>My wallets</strong><br>
+        <div id="wallet-list"></div>
+        <button id="button-show-import-wallets" class="full-width">+ Add Wallet</button>
+    </div>
+
+    <div id="wallet-import">
+        <button id="button-close-import-wallets" class="close">&times;</button>
+        <strong>Import Wallet</strong><br>
+        <input type="text" id="input-privKey"> <button id="button-import-privKey">Import Private Key</button><br>
+        <br>
+        <button id="button-import-betanet" class="full-width">Import from Betanet</button><br>
+        <br>
+        <button id="button-create-new-wallet" class="full-width">Create new Address</button>
+    </div>
 
     <script src="popup.js"></script>
 </body>
