@@ -34,10 +34,17 @@ async function updateWalletList() {
 
     var html = '<ul>';
 
-    for(let wallet of wallets) {
-        let walletHTML = wallet;
-        if(wallet === state.address) walletHTML = '<strong>' + wallet + '</strong>';
-        html += '<li>' + walletHTML + ' <button data-wallet="' + wallet + '">Use</button></li>';
+    console.log(wallets);
+
+    for(let address in wallets) {
+        let addressHMTL = address;
+        if(address === state.address) addressHMTL = '<strong>' + address + '</strong>';
+
+        html += '<li>';
+        html += 'Name: ' + wallets[address].name + ' <button data-wallet="' + address + '">Use</button><br>';
+        html += '<hash>' + addressHMTL + '</hash><br>';
+        html += 'Balance: ' + wallets[address].balance;
+        html += '</li>';
     }
 
     html += '</ul>';
@@ -67,7 +74,7 @@ function messageReceived(update) {
         switch(key) {
             case 'address':      $address.innerText      = state.address; updateWalletList(); break;
             case 'balance':      $balance.innerText      = state.balance;      break;
-            case 'status':       $status.innerText       = state.status;       break;
+            case 'status':       $status.innerText       = state.status;  updateWalletList(); break;
             case 'height':       $height.innerText       = state.height;       break;
             case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
             case 'peers':        $peers.innerText        = state.peers;        break;
@@ -80,6 +87,11 @@ chrome.runtime.onMessage.addListener(messageReceived);
 
 async function importPrivateKey(key) {
     await bgPage.importPrivateKey(key);
+    updateWalletList();
+}
+
+async function updateName(address, name) {
+    await bgPage.updateName(address, name);
     updateWalletList();
 }
 

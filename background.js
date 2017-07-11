@@ -181,14 +181,14 @@ function _start() {
             store.get('wallets', function(items) {
                 console.log(items);
                 var wallets = items.wallets;
-                var privKey = wallets[active];
+                var privKey = wallets[active].key;
                 console.log("store.wallets." + active, privKey);
                 startNimiq({walletSeed: privKey});
             });
         }
         else {
             // Start basic Nimiq runtime to be able to access Nimiq subclasses
-            Nimiq.init(() => {}, error => { console.error(error); });
+            Nimiq.init($ => { window.$ = $; }, error => { console.error(error); });
         }
     });
 }
@@ -202,16 +202,24 @@ function _stop() {
 
 // Storage schema
 // {
+//     version: 1,
 //     active: '<address>',
 //     wallets: {
-//         '<address>': '<privateKey>',
-//         '<address>': '<privateKey>'
+//         '<address>': {
+//              name: 'Wallet Nr 1',
+//              key: '<privateKey>'
+//         },
+//         '<address>': {
+//              name: 'Wallet Nr 1',
+//              key: '<privateKey>'
+//         }
 //     }
 // };
 function writeStoreSchema() {
     // TODO Save-guard against overwriting existing data
 
     var schema = {
+        version: 1,
         active: null,
         wallets: {}
     };
@@ -222,18 +230,23 @@ function writeStoreSchema() {
     });
 }
 
-async function importPrivateKey(privKey, activate) {
+async function importPrivateKey(privKey, name, activate) {
     // TODO Validate privKey format
 
     var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
         address = address.toHex();
+
+    if(!name) name = address.substring(0, 6);
 
     return await new Promise(function(resolve, reject) {
         store.get('wallets', function(items) {
             console.log(items);
 
             var wallets = items.wallets;
-            wallets[address] = privKey;
+            wallets[address] = {
+                name: name,
+                key: privKey
+            };
 
             store.set({wallets: wallets}, function() {
                 if(chrome.runtime.lastError) console.log(runtime.lastError);
@@ -261,9 +274,19 @@ async function listWallets() {
         });
     });
 
-    // TODO Include balance in the returned list
+    if(state.status === 'Consensus established') {
+        for(let address in wallets) {
+            let balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
+            wallets[address].balance = Nimiq.Policy.satoshisToCoins(balance.value);
+        }
+    }
+    else {
+        for(let address in wallets) {
+            wallets[address].balance = 0;
+        }
+    }
 
-    return Object.keys(wallets);
+    return wallets;
 }
 
 function switchWallet(address) {
@@ -276,5 +299,24 @@ function switchWallet(address) {
             _stop();
             _start();
         }
+    });
+}
+
+async function updateName(address, name) {
+    return await new Promise(function(resolve, reject) {
+        store.get('wallets', function(items) {
+            console.log(items);
+
+            var wallets = items.wallets;
+            wallets[address].name = name;
+
+            store.set({wallets: wallets}, function() {
+                if(chrome.runtime.lastError) console.log(runtime.lastError);
+                else {
+                    console.log("Stored name", name, address);
+                    resolve();
+                }
+            });
+        });
     });
 }
