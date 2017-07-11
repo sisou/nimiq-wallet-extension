@@ -10,9 +10,7 @@ var $address      = document.getElementById('address'),
     $walletList   = document.getElementById('wallet-list');
 
 // Cache all input elements
-var $buttonStart         = document.getElementById('button-start'),
-    $buttonStop          = document.getElementById('button-stop'),
-    $buttonStartMining   = document.getElementById('button-start-mining'),
+var $buttonStartMining   = document.getElementById('button-start-mining'),
     $buttonStopMining    = document.getElementById('button-stop-mining'),
     $inputPrivKey        = document.getElementById('input-privKey'),
     $buttonImportPrivKey = document.getElementById('button-import-privKey'),
@@ -51,29 +49,45 @@ updateWalletList();
 // Listen for updates from the background script
 function messageReceived(update) {
     console.log("message received:", update);
-    Object.assign(state, update);
 
-    switch(Object.keys(update)[0]) {
-        case 'address':      $address.innerText      = state.address; updateWalletList(); break;
-        case 'balance':      $balance.innerText      = state.balance;      break;
-        case 'status':       $status.innerText       = state.status;       break;
-        case 'height':       $height.innerText       = state.height;       break;
-        case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
-        case 'peers':        $peers.innerText        = state.peers;        break;
-        case 'mining':       $mining.innerText       = state.mining;       break;
-        case 'hashrate':     $hashrate.innerText     = state.hashrate;     break;
+    var key = Object.keys(update)[0];
+
+    if(key === 'privKey') {
+        importPrivateKey(update.privKey);
+    }
+    else {
+        if(key === 'balance') {
+            // Skip balance updates during wallet switch
+            if(state.balance === 'loading...' && state.status !== 'Consensus established')
+                return;
+        }
+
+        Object.assign(state, update);
+
+        switch(key) {
+            case 'address':      $address.innerText      = state.address; updateWalletList(); break;
+            case 'balance':      $balance.innerText      = state.balance;      break;
+            case 'status':       $status.innerText       = state.status;       break;
+            case 'height':       $height.innerText       = state.height;       break;
+            case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
+            case 'peers':        $peers.innerText        = state.peers;        break;
+            case 'mining':       $mining.innerText       = state.mining;       break;
+            case 'hashrate':     $hashrate.innerText     = state.hashrate;     break;
+        }
     }
 }
 chrome.runtime.onMessage.addListener(messageReceived);
 
+async function importPrivateKey(key) {
+    await bgPage.importPrivateKey(key);
+    updateWalletList();
+}
+
 // Attach input listeners
-$buttonStart.addEventListener('click', bgPage.start);
-$buttonStop.addEventListener('click', bgPage.stop);
 $buttonStartMining.addEventListener('click', bgPage.startMining);
 $buttonStopMining.addEventListener('click', bgPage.stopMining);
 $buttonImportPrivKey.addEventListener('click', async e => {
-    await bgPage.importPrivateKey($inputPrivKey.value);
-    updateWalletList();
+    importPrivateKey($inputPrivKey.value);
 });
 $walletList.addEventListener('click', e => {
     if(e.target.matches('button')) {
@@ -84,9 +98,7 @@ $buttonImportBetanet.addEventListener('click', e => {
     chrome.tabs.query({active: true}, tabs => {
         var tab = tabs[0];
         if(tab.url === 'https://nimiq.com/betanet/') {
-            // console.log("run $.wallet.dump() in the page context");
-            var key = chrome.tabs.executeScript({file: "extract_betanet_key.js"});
-            console.log("key", key);
+            chrome.tabs.executeScript({file: "extract_betanet_key.js"});
         }
         else {
             window.open('https://nimiq.com/betanet','_newtab');

@@ -160,9 +160,9 @@ chrome.runtime.onMessage.addListener(messageReceived);
 
 var store = chrome.storage.local;
 
-function start() {
+function _start() {
     if(Nimiq._core) {
-        console.error('Nimiq is already running. stop() first.');
+        console.error('Nimiq is already running. _stop() first.');
         return false;
     }
 
@@ -173,7 +173,7 @@ function start() {
         if(typeof active === 'undefined') {
             // Storage schema is not yet set
             writeStoreSchema();
-            start();
+            _start();
             return;
         }
 
@@ -192,9 +192,9 @@ function start() {
         }
     });
 }
-start();
+_start();
 
-function stop() {
+function _stop() {
     $.network.disconnect();
     Nimiq._core = null;
     $ = null;
@@ -270,9 +270,11 @@ function switchWallet(address) {
     store.set({active: address}, function() {
         if(chrome.runtime.lastError) console.log(runtime.lastError);
         else {
-            console.log("Stored and activated", address);
-            stop();
-            start();
+            console.log("Activated", address);
+            updateState({address: address});
+            updateState({balance: 'loading...'});
+            _stop();
+            _start();
         }
     });
 }

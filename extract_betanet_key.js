@@ -1,4 +1,4 @@
-function extractBetanetPrivateKey() {
+(function() {
 
     var scriptContent = "document.body.setAttribute('data-private-key', $.wallet.dump());\n";
 
@@ -11,8 +11,5 @@ function extractBetanetPrivateKey() {
     document.body.removeAttribute('data-private-key');
     document.getElementById("my-nimiq-wallet-key-extractor").remove();
 
-    console.log(privKey);
-
-    return privKey;
-}
-extractBetanetPrivateKey();
+    chrome.runtime.sendMessage({privKey: privKey});
+})();
