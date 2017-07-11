@@ -14,7 +14,8 @@ var $buttonStartMining   = document.getElementById('button-start-mining'),
     $buttonStopMining    = document.getElementById('button-stop-mining'),
     $inputPrivKey        = document.getElementById('input-privKey'),
     $buttonImportPrivKey = document.getElementById('button-import-privKey'),
-    $buttonImportBetanet = document.getElementById('button-import-betanet');
+    $buttonImportBetanet = document.getElementById('button-import-betanet'),
+    $buttonNewWallet     = document.getElementById('button-create-new-wallet');
 
 // Set up initial values
 var bgPage = chrome.extension.getBackgroundPage(),
@@ -97,6 +98,11 @@ async function updateName(address, name) {
     updateWalletList();
 }
 
+async function createNewWallet() {
+    await bgPage.createNewWallet();
+    updateWalletList();
+}
+
 // Attach input listeners
 $buttonStartMining.addEventListener('click', bgPage.startMining);
 $buttonStopMining.addEventListener('click', bgPage.stopMining);
@@ -126,4 +132,7 @@ $buttonImportBetanet.addEventListener('click', e => {
             window.open('https://nimiq.com/betanet','_newtab');
         }
     });
+});
+$buttonNewWallet.addEventListener('click', e => {
+    createNewWallet();
 });

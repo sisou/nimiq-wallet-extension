@@ -320,3 +320,8 @@ async function updateName(address, name) {
         });
     });
 }
+
+async function createNewWallet() {
+    var wallet = await Nimiq.Wallet.createVolatile();
+    return await importPrivateKey(wallet.dump());
+}
