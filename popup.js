@@ -41,7 +41,9 @@ async function updateWalletList() {
         if(address === state.address) addressHMTL = '<strong>' + address + '</strong>';
 
         html += '<li>';
-        html += 'Name: ' + wallets[address].name + ' <button data-wallet="' + address + '">Use</button><br>';
+        html += '<input type="text" value="' + wallets[address].name + '" id="' + address + '-name">';
+        html += '<button data-wallet="' + address + '" class="update-name">Edit</button> ';
+        html += '<button data-wallet="' + address + '" class="use-wallet">Use</button><br>';
         html += '<hash>' + addressHMTL + '</hash><br>';
         html += 'Balance: ' + wallets[address].balance;
         html += '</li>';
@@ -98,13 +100,21 @@ async function updateName(address, name) {
 // Attach input listeners
 $buttonStartMining.addEventListener('click', bgPage.startMining);
 $buttonStopMining.addEventListener('click', bgPage.stopMining);
+
+$walletList.addEventListener('click', e => {
+    if(e.target.matches('button.use-wallet')) {
+        var address = e.target.getAttribute('data-wallet');
+        bgPage.switchWallet(address);
+    }
+    else if(e.target.matches('button.update-name')) {
+        var address = e.target.getAttribute('data-wallet');
+        var name = document.getElementById(address + '-name').value;
+        updateName(address, name);
+    }
+});
+
 $buttonImportPrivKey.addEventListener('click', async e => {
     importPrivateKey($inputPrivKey.value);
-});
-$walletList.addEventListener('click', e => {
-    if(e.target.matches('button')) {
-        bgPage.switchWallet(e.target.getAttribute('data-wallet'));
-    }
 });
 $buttonImportBetanet.addEventListener('click', e => {
     chrome.tabs.query({active: true}, tabs => {

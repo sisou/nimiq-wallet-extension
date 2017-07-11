@@ -282,7 +282,7 @@ async function listWallets() {
     }
     else {
         for(let address in wallets) {
-            wallets[address].balance = 0;
+            wallets[address].balance = 'loading...';
         }
     }
 
