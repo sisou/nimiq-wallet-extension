@@ -3,6 +3,8 @@
 // Cache all document node pointers
 var $address          = document.getElementById('address'),
     $balance          = document.getElementById('balance'),
+    $newTx            = document.getElementById('new-tx'),
+    $txsList          = document.getElementById('txs-list'),
     $status           = document.getElementById('status'),
     $height           = document.getElementById('height'),
     $targetHeight     = document.getElementById('targetHeight'),
@@ -14,7 +16,12 @@ var $address          = document.getElementById('address'),
     $walletList       = document.getElementById('wallet-list');
 
 // Cache all input elements
-var $buttonStartMining        = document.getElementById('button-start-mining'),
+var $buttonNewTx              = document.getElementById('button-new-tx'),
+    $buttonCloseNewTx         = document.getElementById('button-close-new-tx'),
+    $inputTxReceiver          = document.getElementById('input-tx-receiver'),
+    $inputTxValue             = document.getElementById('input-tx-value'),
+    $buttonSendTx             = document.getElementById('button-send-tx'),
+    $buttonStartMining        = document.getElementById('button-start-mining'),
     $buttonStopMining         = document.getElementById('button-stop-mining'),
     $buttonShowMyWallets      = document.getElementById('button-show-my-wallets'),
     $buttonCloseMyWallets     = document.getElementById('button-close-my-wallets'),
@@ -69,6 +76,31 @@ async function updateWalletList() {
 }
 updateWalletList();
 
+function renderTxs() {
+    var html = '';
+
+    if(state.outgoingTx.length) {
+        html += '<strong>Pending Outgoing Transactions</strong><ul>';
+        for(tx of state.outgoingTx) {
+            html += '<li><hash>' + tx.receiver + '</hash>: ' + tx.value + /*'<br><em>' + tx.message + '</em>' + */'</li>';
+        }
+        html += '</ul>';
+    }
+
+    if(state.incomingTx.length) {
+        html += '<strong>Pending Incoming Transactions</strong><ul>';
+        for(tx of state.incomingTx) {
+            html += '<li><hash>' + tx.sender + '</hash>: ' + tx.value + /*'<br><em>' + tx.message + '</em>' + */'</li>';
+        }
+        html += '</ul>';
+    }
+
+    if(html !== '') html = '<hr>' + html;
+
+    $txsList.innerHTML = html;
+}
+renderTxs();
+
 // Listen for updates from the background script
 function messageReceived(update) {
     console.log("message received:", update);
@@ -92,15 +124,29 @@ function messageReceived(update) {
             case 'address':      $address.innerText      = state.address; updateWalletList(); break;
             case 'balance':      $balance.innerText      = state.balance;      break;
             case 'status':       $status.innerText       = state.status;  updateWalletList(); break;
-            case 'height':       $height.innerText       = state.height;       break;
+            case 'height':       $height.innerText       = state.height;  updateWalletList(); break;
             case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
             case 'peers':        $peers.innerText        = state.peers;        break;
             case 'mining':       $mining.innerText       = state.mining;       break;
             case 'hashrate':     $hashrate.innerText     = state.hashrate;     break;
+            case 'outgoingTx':   /* since outgoing and incoming txs are always send after each other, only work on incomingTx */ break;
+            case 'incomingTx':   renderTxs(); break;
         }
     }
 }
 chrome.runtime.onMessage.addListener(messageReceived);
+
+async function sendTransaction() {
+    var address = $inputTxReceiver.value;
+    var value = parseFloat($inputTxValue.value);
+
+    var error = await bgPage.sendTransaction(address, value);
+
+    if(error) {
+        alert(error);
+    }
+    else $buttonCloseNewTx.click();
+}
 
 async function importPrivateKey(key) {
     await bgPage.importPrivateKey(key);
@@ -123,6 +169,14 @@ async function removeWallet(address) {
 }
 
 // Attach input listeners
+$buttonNewTx.addEventListener('click', e => {
+    $newTx.classList.add('show');
+});
+$buttonCloseNewTx.addEventListener('click', e => {
+    $newTx.classList.remove('show');
+})
+$buttonSendTx.addEventListener('click', sendTransaction);
+
 $buttonStartMining.addEventListener('click', bgPage.startMining);
 $buttonStopMining.addEventListener('click', bgPage.stopMining);
 

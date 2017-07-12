@@ -27,7 +27,8 @@ value "popup.html".
         }
 
         #wallet-management,
-        #wallet-import {
+        #wallet-import,
+        #new-tx {
             /*display: none;*/
             width: 100%;
             height: 100%;
@@ -41,24 +42,26 @@ value "popup.html".
             box-shadow: 0 0 10px 0 gray;
         }
         #wallet-management.show,
-        #wallet-import.show {
+        #wallet-import.show,
+        #new-tx.show {
             top: 0;
         }
-        #wallet-management.show-instant,
         #wallet-import.show-instant {
             transition: none;
             top: 0;
         }
 
-        button.full-width {
+        .full-width {
+            box-sizing: border-box;
             width: 100%;
-            padding: 0.5em 0;
+            padding: 0.5em;
         }
         button.close {
             float: right;
         }
 
-        #wallet-list ul {
+        #wallet-list ul,
+        #txs-list ul {
             padding-left: 1.5em;
         }
 
@@ -72,6 +75,8 @@ value "popup.html".
 
     Address: <span id="address"></span><br>
     Balance: <span id="balance"></span><br>
+    <button id="button-new-tx">New Transaction</button>
+    <div id="txs-list"></div>
     <hr>
     Status: <span id="status"></span><br>
     Height: <span id="height"></span><br>
@@ -84,6 +89,17 @@ value "popup.html".
     <button id="button-stop-mining">Stop Mining</button>
     <hr>
     <button id="button-show-my-wallets" class="full-width">My Wallets</button>
+
+    <div id="new-tx">
+        <button id="button-close-new-tx" class="close">&times;</button>
+        <strong>New Transaction</strong><br>
+        <br>
+        <input type="text" id="input-tx-receiver" class="full-width" placeholder="Receiver Account Number">
+        <input type="number" id="input-tx-value" class="full-width" placeholder="0.00"><br>
+        <!-- <input type="text" id="input-tx-message" class="full-width" placeholder="Add a note"><br> -->
+        <br>
+        <button id="button-send-tx" class="full-width">Send</button>
+    </div>
 
     <div id="wallet-management">
         <button id="button-close-my-wallets" class="close">&times;</button>

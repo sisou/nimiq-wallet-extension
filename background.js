@@ -61,7 +61,9 @@ var state = {
     address: '',
     status: 'Not connected',
     mining: false,
-    hashrate: 0
+    hashrate: 0,
+    outgoingTx: [],
+    incomingTx: []
 };
 
 function updateState(update) {
@@ -116,6 +118,37 @@ function _onPeersChanged() {
     updateState({peers: $.network.peerCount});
 }
 
+async function _mempoolChanged() {
+    var txs = $.mempool.getTransactions();
+
+    var outgoing = [],
+        incoming = [];
+
+    for (var tx of txs) {
+        var senderAddr = await tx.getSenderAddr();
+
+        var value = Nimiq.Policy.satoshisToCoins(tx.value);
+        var fee = Nimiq.Policy.satoshisToCoins(tx.fee);
+
+        var txObj = {
+            sender: senderAddr.toHex(),
+            receiver: tx.recipientAddr.toHex(),
+            value: value,
+            message: null, // TODO Fill when available
+            fee: fee,
+            nonce: tx.nonce
+        };
+
+        if(txObj.sender === state.address)
+            outgoing.push(txObj);
+        if(txObj.receiver === state.address)
+            incoming.push(txObj);
+    }
+
+    updateState({outgoingTx: outgoing});
+    updateState({incomingTx: incoming});
+}
+
 function startNimiq(params) {
     updateState({status: 'Connecting'});
 
@@ -146,6 +179,9 @@ function startNimiq(params) {
         });
 
         $.network.on('peers-changed', () => _onPeersChanged());
+
+        $.mempool.on('*', () => _mempoolChanged());
+        _mempoolChanged();
 
         $.network.connect();
     }, function(error) {
@@ -354,4 +390,36 @@ async function removeWallet(address) {
             });
         });
     });
+}
+
+async function sendTransaction(address, value) {
+    if (!address) {
+        return "No address";
+    }
+
+    try {
+        address = new Nimiq.Address(Nimiq.BufferUtils.fromHex(address));
+    } catch (e) {
+        return "No valid address";
+    }
+
+    if (isNaN(value) || value <= 0) {
+        return "No valid value";
+    }
+
+    var balance = await $.accounts.getBalance($.wallet.address);
+
+    value = Nimiq.Policy.coinsToSatoshis(value);
+
+    var fee = 0;
+
+    if (balance.value < value + fee) {
+        return "Not enough funds";
+    }
+
+    var tx = await $.wallet.createTransaction(address, value, fee, balance.nonce);
+
+    $.mempool.pushTransaction(tx);
+
+    console.log("Pushed transaction", tx);
 }
