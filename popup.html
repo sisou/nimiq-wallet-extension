@@ -8,13 +8,147 @@ value "popup.html".
 <head>
     <title>Nimiq Wallet Browser Extention</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        button {
+            background:
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+        }
+
+        label {
+            color: #888;
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: "Source Sans Pro", sans-serif;
             font-size: 100%;
             width: 360px;
+            height: 500px;
             background: snow;
             color: #042146;
+            margin: 0;
         }
+
+        header {
+            position: relative;
+            width: 100%;
+            background: #042146;
+            color: white;
+            padding: 0.1em 0;
+            height: 36px;
+        }
+
+        #statusWrapper {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+        }
+
+        #statusIndicator {
+            border-radius: 50%;
+            border: 2px solid white;
+            background: firebrick;
+            width: 16px;
+            height: 16px;
+            margin: 7px;
+        }
+
+        #statusIndicator.yellow {
+            background: gold;
+        }
+
+        #statusIndicator.green {
+            background: limegreen;
+        }
+
+        #statusPopup {
+            display: none;
+            position: absolute;
+            top: 23px;
+            left: 4px;
+            width: 250px;
+            background: snow;
+            color: #042146;
+            border: 1px solid #042146;
+            border-radius: 3px;
+            padding: 0.5em;
+            z-index: 9000;
+        }
+
+        /* triangle border */
+        #statusPopup::before {
+            content: "";
+            border: 6px solid;
+            border-color: transparent transparent #042146 transparent;
+            position: absolute;
+            top: -13px;
+            left: 4px;
+        }
+
+        /* triangle */
+        #statusPopup::after {
+            content: "";
+            border: 6px solid;
+            border-color: transparent transparent snow transparent;
+            position: absolute;
+            top: -12px;
+            left: 4px;
+        }
+
+        #statusWrapper:hover #statusPopup {
+            display: block;
+        }
+
+        .equalize-row {
+            padding: 0.2em 0;
+        }
+
+        .equalize-row span {
+            float: right;
+        }
+
+        header h1 {
+            font-size: 19px;
+            font-weight: 600;
+            text-transform: uppercase;
+            line-height: 0.75em;
+            position: absolute;
+            top: 0;
+            left: 36px;
+        }
+
+        header h1 span {
+            display: block;
+            font-size: 12px;
+            opacity: 0.5;
+        }
+
+        header nav {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        header nav button {
+            line-height: 34px !important;
+            background: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+            opacity: 0.75;
+            outline: none;
+        }
+
+        header nav button:hover {
+            opacity: 1;
+        }
+
+
 
         #address,
         hash {
@@ -45,11 +179,11 @@ value "popup.html".
         #wallet-management.show,
         #wallet-import.show,
         #new-tx.show {
-            top: 0;
+            top: 36px;
         }
         #wallet-import.show-instant {
             transition: none;
-            top: 0;
+            top: 36px;
         }
 
         .full-width {
@@ -70,26 +204,47 @@ value "popup.html".
             margin-bottom: 0.5em;
         }
     </style>
+
+    <link rel="stylesheet" href="vendor/font-awesome/css/font-awesome.min.css">
 </head>
 <body>
-    <h1>Nimiq Wallet Manager</h1>
+    <header>
+        <div id="statusWrapper">
+            <div id="statusIndicator" class="red"></div>
+            <div id="statusPopup">
+                <div class="equalize-row"><label>Status</label> <span id="status"></span></div>
+                <div class="equalize-row"><label>Height</label> <span id="height"></span></div>
+                <div class="equalize-row"><label>Peers</label> <span id="peers"></span></div>
+            </div>
+        </div>
+        <h1>
+            Walter
+            <span>Nimiq Wallet Manager</span>
+        </h1>
+        <nav>
+            <button id="buttonShowContacts" title="Contacts" class="fa fa-address-card" disabled></button>
+            <button id="buttonShowMyWallets" title="My Wallets" class="fa fa-th-large"></button>
+            <button id="buttonShowNotifications" title="Notifications" class="fa fa-exclamation-circle" disabled></button>
+        </nav>
+    </header>
 
-    Address: <span id="address"></span><br>
-    Balance: <span id="balance"></span><br>
-    <button id="button-new-tx">New Transaction</button>
+    <section id="sectionActiveWallet">
+        <div id="activeWalletIdenticon"></div>
+        <span id="activeWalletName"></span><br>
+        <hash id="activeWalletAddress"></hash>
+        Balance: <span id="activeWalletBalance" class="icon-nimiq"></span>
+        <div id="activeWalletActions">
+            <button id="buttonStartMining" disabled>Miner</button>
+            <button id="buttonCreateCashlink" disabled>Cashlink</button>
+            <button id="buttonNewTx">Send</button>
+        </div>
+    </section>
     <div id="txs-list"></div>
-    <hr>
-    Status: <span id="status"></span><br>
-    Height: <span id="height"></span><br>
-    Target height: <span id="targetHeight"></span><br>
-    Peers: <span id="peers"></span>
     <hr>
     Mining: <span id="mining"></span><br>
     Hashrate: <span id="hashrate"></span><br>
     <button id="button-start-mining">Start Mining</button>
     <button id="button-stop-mining">Stop Mining</button>
-    <hr>
-    <button id="button-show-my-wallets" class="full-width">My Wallets</button>
 
     <div id="new-tx">
         <button id="button-close-new-tx" class="close">&times;</button>

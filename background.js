@@ -53,12 +53,15 @@ Nimiq._hasProperScoping = async function() {
 // #####################################################################################################################
 
 var state = {
+    activeWallet: {
+        name: 'loading...',
+        address: '',
+        balance: 'loading...'
+    },
     numberOfWallets: 0,
     height: 0,
     targetHeight: 0,
     peers: 0,
-    balance: 'loading...',
-    address: '',
     status: 'Not connected',
     mining: false,
     hashrate: 0,
@@ -105,7 +108,11 @@ function stopMining() {
 
 function _onBalanceChanged(newBalance) {
     console.log(`Balance is ${Nimiq.Policy.satoshisToCoins(newBalance.value)}.`);
-    updateState({balance: Nimiq.Policy.satoshisToCoins(newBalance.value)});
+    updateState({activeWallet: {
+        name: state.activeWallet.name,
+        address: state.activeWallet.address,
+        balance: Nimiq.Policy.satoshisToCoins(newBalance.value)
+    }});
 }
 
 function _onHeadChanged() {
@@ -139,9 +146,9 @@ async function _mempoolChanged() {
             nonce: tx.nonce
         };
 
-        if(txObj.sender === state.address)
+        if(txObj.sender === state.activeWallet.address)
             outgoing.push(txObj);
-        if(txObj.receiver === state.address)
+        if(txObj.receiver === state.activeWallet.address)
             incoming.push(txObj);
     }
 
@@ -162,7 +169,16 @@ function startNimiq(params) {
         window.$ = $;
 
         console.log('Your address: ' + $.wallet.address.toHex());
-        updateState({address: $.wallet.address.toHex()});
+
+        store.get('wallets', function(items) {
+            var wallets = items.wallets;
+
+            updateState({activeWallet: {
+                name: wallets[$.wallet.address.toHex()].name,
+                address: $.wallet.address.toHex(),
+                balance: state.activeWallet.balance
+            }});
+        });
 
         $.consensus.on('syncing', (targetHeight) => {
             updateState({status: 'Syncing', targetHeight});
@@ -340,10 +356,20 @@ function switchWallet(address) {
         if(chrome.runtime.lastError) console.log(runtime.lastError);
         else {
             console.log("Activated", address);
-            updateState({address: address});
-            updateState({balance: 'loading...'});
-            _stop();
-            _start();
+            store.get('wallets', function(items) {
+                console.log(items);
+
+                var wallets = items.wallets;
+
+                updateState({activeWallet: {
+                    name: wallets[address].name,
+                    address: address,
+                    balance: 'loading...'
+                }});
+
+                _stop();
+                _start();
+            });
         }
     });
 }
@@ -360,6 +386,13 @@ async function updateName(address, name) {
                 if(chrome.runtime.lastError) console.log(runtime.lastError);
                 else {
                     console.log("Stored name", name, address);
+                    if(address === state.activeWallet.address) {
+                        updateState({activeWallet: {
+                            name: name,
+                            address: state.activeWallet.address,
+                            balance: state.activeWallet.balance
+                        }});
+                    }
                     resolve();
                 }
             });

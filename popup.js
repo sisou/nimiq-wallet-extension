@@ -1,13 +1,16 @@
 /* jshint esversion: 6 */
 
 // Cache all document node pointers
-var $address          = document.getElementById('address'),
-    $balance          = document.getElementById('balance'),
+var $address          = document.getElementById('activeWalletAddress'),
+    $name             = document.getElementById('activeWalletName'),
+    $identicon        = document.getElementById('activeWalletIdenticon'),
+    $balance          = document.getElementById('activeWalletBalance'),
     $newTx            = document.getElementById('new-tx'),
     $txsList          = document.getElementById('txs-list'),
+    $statusIndicator  = document.getElementById('statusIndicator'),
     $status           = document.getElementById('status'),
     $height           = document.getElementById('height'),
-    $targetHeight     = document.getElementById('targetHeight'),
+    // $targetHeight     = document.getElementById('targetHeight'),
     $peers            = document.getElementById('peers'),
     $mining           = document.getElementById('mining'),
     $hashrate         = document.getElementById('hashrate'),
@@ -16,14 +19,14 @@ var $address          = document.getElementById('address'),
     $walletList       = document.getElementById('wallet-list');
 
 // Cache all input elements
-var $buttonNewTx              = document.getElementById('button-new-tx'),
+var $buttonNewTx              = document.getElementById('buttonNewTx'),
     $buttonCloseNewTx         = document.getElementById('button-close-new-tx'),
     $inputTxReceiver          = document.getElementById('input-tx-receiver'),
     $inputTxValue             = document.getElementById('input-tx-value'),
     $buttonSendTx             = document.getElementById('button-send-tx'),
     $buttonStartMining        = document.getElementById('button-start-mining'),
     $buttonStopMining         = document.getElementById('button-stop-mining'),
-    $buttonShowMyWallets      = document.getElementById('button-show-my-wallets'),
+    $buttonShowMyWallets      = document.getElementById('buttonShowMyWallets'),
     $buttonCloseMyWallets     = document.getElementById('button-close-my-wallets'),
     $buttonShowImportWallets  = document.getElementById('button-show-import-wallets'),
     $buttonCloseImportWallets = document.getElementById('button-close-import-wallets'),
@@ -36,17 +39,32 @@ var $buttonNewTx              = document.getElementById('button-new-tx'),
 var bgPage = chrome.extension.getBackgroundPage(),
     state  = bgPage.state;
 
-$buttonShowMyWallets.innerText = 'My Wallets (' + state.numberOfWallets + ')';
-$address.innerText         = state.address;
-$balance.innerText         = state.balance;
+$buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')');
+$name.innerText            = state.activeWallet.name;
+$address.innerText         = state.activeWallet.address;
+$balance.innerText         = state.activeWallet.balance;
 $status.innerText          = state.status;
 $height.innerText          = state.height;
-$targetHeight.innerText    = state.targetHeight;
+// $targetHeight.innerText    = state.targetHeight;
 $peers.innerText           = state.peers;
 $mining.innerText          = state.mining;
 $hashrate.innerText        = state.hashrate;
 
 if(state.numberOfWallets === 0) $walletImport.classList.add('show-instant');
+
+function setStatusIndicator() {
+    if(state.status === 'Consensus established') {
+        $statusIndicator.classList.add('green');
+    }
+    else if(state.status === 'Syncing') {
+        $statusIndicator.classList.remove('green');
+        $statusIndicator.classList.add('yellow');
+    }
+    else {
+        $statusIndicator.classList.remove('green', 'yellow');
+    }
+}
+setStatusIndicator();
 
 async function updateWalletList() {
     var wallets = await bgPage.listWallets();
@@ -120,12 +138,15 @@ function messageReceived(update) {
         Object.assign(state, update);
 
         switch(key) {
-            case 'numberOfWallets': $buttonShowMyWallets.innerText = 'My Wallets (' + state.numberOfWallets + ')'; break;
-            case 'address':      $address.innerText      = state.address; updateWalletList(); break;
-            case 'balance':      $balance.innerText      = state.balance;      break;
-            case 'status':       $status.innerText       = state.status;  updateWalletList(); break;
+            case 'numberOfWallets': $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')'); break;
+            case 'activeWallet': $name.innerText         = state.activeWallet.name;
+                                 $address.innerText      = state.activeWallet.address;
+                                 $balance.innerText      = state.activeWallet.balance;
+                                 updateWalletList();
+                                 break;
+            case 'status':       $status.innerText       = state.status;  setStatusIndicator(); updateWalletList(); break;
             case 'height':       $height.innerText       = state.height;  updateWalletList(); break;
-            case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
+            // case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
             case 'peers':        $peers.innerText        = state.peers;        break;
             case 'mining':       $mining.innerText       = state.mining;       break;
             case 'hashrate':     $hashrate.innerText     = state.hashrate;     break;
@@ -164,6 +185,8 @@ async function createNewWallet() {
 }
 
 async function removeWallet(address) {
+    if(!confirm("Do you really want to remove this wallet?")) return;
+
     await bgPage.removeWallet(address);
     updateWalletList();
 }
@@ -181,7 +204,7 @@ $buttonStartMining.addEventListener('click', bgPage.startMining);
 $buttonStopMining.addEventListener('click', bgPage.stopMining);
 
 $buttonShowMyWallets.addEventListener('click', e => {
-    $walletManagement.classList.add('show');
+    $walletManagement.classList.toggle('show');
 });
 $buttonCloseMyWallets.addEventListener('click', e => {
     $walletManagement.classList.remove('show');
