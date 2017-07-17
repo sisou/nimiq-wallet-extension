@@ -35,6 +35,18 @@ var $buttonNewTx              = document.getElementById('buttonNewTx'),
     $buttonImportBetanet      = document.getElementById('button-import-betanet'),
     $buttonNewWallet          = document.getElementById('button-create-new-wallet');
 
+// Helper functions
+function formatBalance(value) {
+    if(isNaN(value)) value = value.value;
+
+    // If the value has no decimal places below 0.01, display 0 decimals
+    if(parseFloat(value.toFixed(2)) === value) {
+        return value.toFixed(2);
+    }
+    // Otherwise, all required decimals will be displayed automatically
+    else return value;
+}
+
 // Set up initial values
 var bgPage = chrome.extension.getBackgroundPage(),
     state  = bgPage.state;
@@ -42,7 +54,7 @@ var bgPage = chrome.extension.getBackgroundPage(),
 $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')');
 $name.innerText            = state.activeWallet.name;
 $address.innerText         = state.activeWallet.address;
-$balance.innerText         = state.activeWallet.balance;
+$balance.innerText         = formatBalance(state.activeWallet.balance);
 $status.innerText          = state.status;
 $height.innerText          = state.height;
 // $targetHeight.innerText    = state.targetHeight;
@@ -89,7 +101,7 @@ async function updateWalletList() {
         if(state.address && state.address !== address)
             html += '<button data-wallet="' + address + '" class="remove-wallet">Remove</button><br>';
         html += '<hash>' + addressHMTL + '</hash><br>';
-        html += 'Balance: ' + wallets[address].balance;
+        html += 'Balance: ' + formatBalance(wallets[address].balance);
         html += '</li>';
     }
 
@@ -105,7 +117,7 @@ function renderTxs() {
     if(state.outgoingTx.length) {
         html += '<strong>Pending Outgoing Transactions</strong><ul>';
         for(tx of state.outgoingTx) {
-            html += '<li><hash>' + tx.receiver + '</hash>: ' + tx.value + /*'<br><em>' + tx.message + '</em>' + */'</li>';
+            html += '<li><hash>' + tx.receiver + '</hash>: ' + formatBalance(tx.value) + /*'<br><em>' + tx.message + '</em>' + */'</li>';
         }
         html += '</ul>';
     }
@@ -113,7 +125,7 @@ function renderTxs() {
     if(state.incomingTx.length) {
         html += '<strong>Pending Incoming Transactions</strong><ul>';
         for(tx of state.incomingTx) {
-            html += '<li><hash>' + tx.sender + '</hash>: ' + tx.value + /*'<br><em>' + tx.message + '</em>' + */'</li>';
+            html += '<li><hash>' + tx.sender + '</hash>: ' + formatBalance(tx.value) + /*'<br><em>' + tx.message + '</em>' + */'</li>';
         }
         html += '</ul>';
     }
@@ -146,7 +158,7 @@ function messageReceived(update) {
             case 'numberOfWallets': $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')'); break;
             case 'activeWallet': $name.innerText         = state.activeWallet.name;
                                  $address.innerText      = state.activeWallet.address;
-                                 $balance.innerText      = state.activeWallet.balance;
+                                 $balance.innerText      = formatBalance(state.activeWallet.balance);
                                  $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
                                  updateWalletList();
                                  break;
