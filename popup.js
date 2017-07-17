@@ -136,7 +136,7 @@ async function updateWalletList() {
         html += '<input type="text" value="' + wallets[address].name + '" id="' + address + '-name">';
         html += '<button data-wallet="' + address + '" class="update-name">Edit</button> ';
         html += '<button data-wallet="' + address + '" class="use-wallet">Use</button> ';
-        if(state.address && state.address !== address)
+        if(state.activeWallet.address && state.activeWallet.address !== address)
             html += '<button data-wallet="' + address + '" class="remove-wallet">Remove</button><br>';
         html += '<hash>' + addressHMTL + '</hash><br>';
         html += 'Balance: ' + formatBalance(wallets[address].balance);
@@ -241,7 +241,7 @@ async function createNewWallet() {
 }
 
 async function removeWallet(address) {
-    if(!confirm("Do you really want to remove this wallet?")) return;
+    if(!confirm('Do you really want to remove this wallet?\n\n' + address.toUpperCase())) return;
 
     await bgPage.removeWallet(address);
     updateWalletList();
