@@ -17,7 +17,7 @@
     "default_popup": "popup.html"
   },
   "incognito": "split",
-  "content_security_policy": "script-src 'self' https://cdn.nimiq.com; object-src 'self'",
+  "content_security_policy": "script-src 'self' https://cdn.nimiq.com https://fonts.googleapis.com/css; object-src 'self'",
   "permissions": [
     "storage",
     "unlimitedStorage",
