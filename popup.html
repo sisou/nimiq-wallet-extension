@@ -6,7 +6,7 @@ value "popup.html".
  -->
 <html>
 <head>
-    <title>Nimiq Wallet Browser Extention</title>
+    <title>WALTER - Nimiq Wallet Manager</title>
     <style>
         * {
             box-sizing: border-box;
@@ -22,6 +22,17 @@ value "popup.html".
 
         label {
             color: #888;
+        }
+
+        .icon-nimiq::before {
+            content: "";
+            height: 0.65em;
+            width: 0.75em;
+            display: inline-block;
+            background-image: url('nimiq_blue.svg');
+            background-size: 100%;
+            background-repeat: no-repeat;
+            margin-right: 0.2em;
         }
 
         body {
@@ -148,11 +159,51 @@ value "popup.html".
             opacity: 1;
         }
 
+        #sectionActiveWallet {
+            padding: 1em;
+        }
+
+        #activeWalletIdenticon {
+            width: 40px;
+            height: 40px;
+            float: left;
+            border-radius: 50%;
+            margin-right: 0.5em;
+        }
+
+        #activeWalletIdenticon > * {
+            border-radius: 50%;
+        }
+
+        #activeWalletName {
+            float: left;
+            font-weight: 600;
+            margin-bottom: 0.25em;
+        }
+
+        #activeWalletAddress {
+            float: left;
+            text-overflow: ellipsis;
+            font-size: 12px;
+            opacity: 0.6;
+            width: 280px;
+            overflow: hidden;
+        }
+
+        #activeWalletBalance {
+            float: right;
+            font-size: 22px;
+        }
+
+        #activeWalletActions {
+            clear: both;
+        }
+
 
 
         #address,
         hash {
-            font-family: monospace;
+            font-family: "Fira Mono", monospace;
             text-transform: uppercase;
         }
 
@@ -229,10 +280,10 @@ value "popup.html".
     </header>
 
     <section id="sectionActiveWallet">
-        <div id="activeWalletIdenticon"></div>
+        <div id="activeWalletIdenticon">&nbsp;</div>
         <span id="activeWalletName"></span><br>
-        <hash id="activeWalletAddress"></hash>
-        Balance: <span id="activeWalletBalance" class="icon-nimiq"></span>
+        <hash id="activeWalletAddress"></hash><br>
+        <span id="activeWalletBalance" class="icon-nimiq"></span>
         <div id="activeWalletActions">
             <button id="buttonStartMining" disabled>Miner</button>
             <button id="buttonCreateCashlink" disabled>Cashlink</button>
@@ -274,6 +325,8 @@ value "popup.html".
         <button id="button-create-new-wallet" class="full-width">Create new Address</button>
     </div>
 
+    <script src="vendor/blockies.min.js"></script>
+    <script src="vendor/identicon.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>

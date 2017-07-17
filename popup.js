@@ -66,6 +66,11 @@ function setStatusIndicator() {
 }
 setStatusIndicator();
 
+function createIdenticon(hash) {
+    return blockies.create({seed: hash, size: 10, scale: 4});
+}
+$identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
+
 async function updateWalletList() {
     var wallets = await bgPage.listWallets();
 
@@ -142,6 +147,7 @@ function messageReceived(update) {
             case 'activeWallet': $name.innerText         = state.activeWallet.name;
                                  $address.innerText      = state.activeWallet.address;
                                  $balance.innerText      = state.activeWallet.balance;
+                                 $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
                                  updateWalletList();
                                  break;
             case 'status':       $status.innerText       = state.status;  setStatusIndicator(); updateWalletList(); break;
