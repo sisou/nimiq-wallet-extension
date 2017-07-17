@@ -13,12 +13,68 @@ value "popup.html".
             box-sizing: border-box;
         }
 
+        input {
+            padding:0.6em 0.6em;
+            margin:0 0 0.3em 0;
+        }
+
         button {
-            background:
+            color: white;
+            border: none;
+            padding: 0.6em 1.2em;
+            border-radius: 3px;
+            text-align: center;
+            background: #042146;
+            cursor: pointer;
+            /*transition:all 0.2s;*/
+            font-weight: 600;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #FFC107;
+            color: #042146;
+        }
+
+        button.close {
+            float: right;
+            padding: 0.2em 0.4em 0.1em 0.4em;
+            font-size: 1.3em;
+         }
+
+        button.button-large,
+        input.input-large {
+            padding: 1em 0;
+            text-align: center;
+            width: 100%;
         }
 
         button:disabled {
             cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        button:disabled:hover {
+            background: #042146;
+            color: white;
+        }
+
+        .button-group-left {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: 2px solid snow;
+        }
+
+        .button-group-middle {
+            border-radius: 0;
+            border-right: 2px solid snow;
+        }
+
+        .button-group-right {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
         }
 
         label {
@@ -154,16 +210,16 @@ value "popup.html".
 
         header nav button {
             line-height: 34px !important;
-            background: transparent;
+            background: transparent !important;
+            padding: 1px 6px; /* Chrome user agent style */
             color: white;
             border: none;
             cursor: pointer;
-            opacity: 0.75;
             outline: none;
         }
 
         header nav button:hover {
-            opacity: 1;
+            color: #FFC107;
         }
 
         #sectionActiveWallet {
@@ -200,6 +256,8 @@ value "popup.html".
         #activeWalletBalance {
             float: right;
             font-size: 22px;
+            padding-top: 0.25em;
+            padding-bottom: 0.5em;
         }
 
         #activeWalletActions {
@@ -245,15 +303,6 @@ value "popup.html".
             top: 36px;
         }
 
-        .full-width {
-            box-sizing: border-box;
-            width: 100%;
-            padding: 0.5em;
-        }
-        button.close {
-            float: right;
-        }
-
         #wallet-list ul,
         #txs-list ul {
             padding-left: 1.5em;
@@ -294,8 +343,8 @@ value "popup.html".
         <span id="activeWalletBalance" class="icon-nimiq"></span>
         <div id="activeWalletActions">
             <button id="buttonStartMining" disabled>Miner</button>
-            <button id="buttonCreateCashlink" disabled title="(coming soon)">Cashlink</button>
-            <button id="buttonNewTx">Send</button>
+            <button id="buttonNewTx" class="button-group-right" style="float: right">Send</button>
+            <button id="buttonCreateCashlink" class="button-group-left" style="float: right" disabled title="(coming soon)">Cashlink</button>
         </div>
     </section>
     <div id="txs-list"></div>
@@ -309,18 +358,18 @@ value "popup.html".
         <button id="button-close-new-tx" class="close">&times;</button>
         <strong>New Transaction</strong><br>
         <br>
-        <input type="text" id="input-tx-receiver" class="full-width" placeholder="Receiver Account Number">
-        <input type="number" id="input-tx-value" class="full-width" placeholder="0.00"><br>
-        <!-- <input type="text" id="input-tx-message" class="full-width" placeholder="Add a note"><br> -->
+        <input type="text" id="input-tx-receiver" class="input-large" placeholder="Receiver Account Number">
+        <input type="number" id="input-tx-value" class="input-large" placeholder="0.00"><br>
+        <!-- <input type="text" id="input-tx-message" class="input-large" placeholder="Add a note"><br> -->
         <br>
-        <button id="button-send-tx" class="full-width">Send</button>
+        <button id="button-send-tx" class="button-large">Send</button>
     </div>
 
     <div id="wallet-management">
         <button id="button-close-my-wallets" class="close">&times;</button>
         <strong>My wallets</strong><br>
         <div id="wallet-list"></div>
-        <button id="button-show-import-wallets" class="full-width">+ Add Wallet</button>
+        <button id="button-show-import-wallets" class="button-large">+ Add Wallet</button>
     </div>
 
     <div id="wallet-import">
@@ -328,9 +377,9 @@ value "popup.html".
         <strong>Import Wallet</strong><br>
         <input type="text" id="input-privKey"> <button id="button-import-privKey">Import Private Key</button><br>
         <br>
-        <button id="button-import-betanet" class="full-width">Import from Betanet</button><br>
+        <button id="button-import-betanet" class="button-large">Import from Betanet</button><br>
         <br>
-        <button id="button-create-new-wallet" class="full-width">Create new Address</button>
+        <button id="button-create-new-wallet" class="button-large">Create new Address</button>
     </div>
 
     <script src="vendor/blockies.min.js"></script>
