@@ -12,8 +12,6 @@ var $address          = document.getElementById('activeWalletAddress'),
     $height           = document.getElementById('height'),
     // $targetHeight     = document.getElementById('targetHeight'),
     $peers            = document.getElementById('peers'),
-    $mining           = document.getElementById('mining'),
-    $hashrate         = document.getElementById('hashrate'),
     $walletManagement = document.getElementById('wallet-management'),
     $walletImport     = document.getElementById('wallet-import'),
     $walletList       = document.getElementById('wallet-list');
@@ -24,8 +22,7 @@ var $buttonNewTx              = document.getElementById('buttonNewTx'),
     $inputTxReceiver          = document.getElementById('input-tx-receiver'),
     $inputTxValue             = document.getElementById('input-tx-value'),
     $buttonSendTx             = document.getElementById('button-send-tx'),
-    $buttonStartMining        = document.getElementById('button-start-mining'),
-    $buttonStopMining         = document.getElementById('button-stop-mining'),
+    $buttonToggleMining       = document.getElementById('buttonToggleMining'),
     $buttonShowMyWallets      = document.getElementById('buttonShowMyWallets'),
     $buttonCloseMyWallets     = document.getElementById('button-close-my-wallets'),
     $buttonShowImportWallets  = document.getElementById('button-show-import-wallets'),
@@ -59,16 +56,14 @@ $status.innerText          = state.status;
 $height.innerText          = state.height;
 // $targetHeight.innerText    = state.targetHeight;
 $peers.innerText           = state.peers;
-$mining.innerText          = state.mining;
-$hashrate.innerText        = state.hashrate;
 
 if(state.numberOfWallets === 0) $walletImport.classList.add('show-instant');
 
-function setStatusIndicator() {
-    if(state.status === 'Consensus established') {
+function setStatusIndicator(status) {
+    if(status === 'Consensus established') {
         $statusIndicator.classList.add('green');
     }
-    else if(state.status === 'Syncing') {
+    else if(status === 'Syncing') {
         $statusIndicator.classList.remove('green');
         $statusIndicator.classList.add('yellow');
     }
@@ -76,12 +71,55 @@ function setStatusIndicator() {
         $statusIndicator.classList.remove('green', 'yellow');
     }
 }
-setStatusIndicator();
+setStatusIndicator(state.status);
 
 function createIdenticon(hash) {
     return blockies.create({seed: hash, size: 10, scale: 4});
 }
 $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
+
+function setMinerStatus(mining) {
+    if(mining) {
+        $buttonToggleMining.innerHTML = 'Miner <i class="fa fa-gear fa-spin"></i>';
+        $buttonToggleMining.classList.add('mining');
+    }
+    else {
+        $buttonToggleMining.innerHTML = 'Miner <i class="fa fa-power-off"></i>';
+        $buttonToggleMining.classList.remove('mining');
+    }
+}
+setMinerStatus(state.mining);
+
+function formatHashrate(value) {
+    var resultValue = 0;
+    var resultUnit = 'H/s';
+
+    if(value < 1000) {
+        resultValue = value;
+    }
+    else {
+        let kilo = value / 1000;
+        if(kilo < 1000) {
+            resultValue = kilo;
+            resultUnit = 'kH/s';
+        }
+        else {
+            let mega = kilo / 1000;
+            if(mega < 1000) {
+                resultValue = mega;
+                resultUnit = 'MH/s';
+            }
+            else {
+                resultValue = mega / 1000;
+                resultUnit = 'GH/s';
+            }
+        }
+    }
+
+    resultValue = Math.round(resultValue * 100) / 100;
+    return resultValue + " " + resultUnit;
+}
+$buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate));
 
 async function updateWalletList() {
     var wallets = await bgPage.listWallets();
@@ -162,12 +200,12 @@ function messageReceived(update) {
                                  $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
                                  updateWalletList();
                                  break;
-            case 'status':       $status.innerText       = state.status;  setStatusIndicator(); updateWalletList(); break;
+            case 'status':       $status.innerText       = state.status;  setStatusIndicator(state.status); updateWalletList(); break;
             case 'height':       $height.innerText       = state.height;  updateWalletList(); break;
             // case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
-            case 'peers':        $peers.innerText        = state.peers;        break;
-            case 'mining':       $mining.innerText       = state.mining;       break;
-            case 'hashrate':     $hashrate.innerText     = state.hashrate;     break;
+            case 'peers':        $peers.innerText        = state.peers; break;
+            case 'mining':       setMinerStatus(state.mining); break;
+            case 'hashrate':     $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate)); break;
             case 'outgoingTx':   /* since outgoing and incoming txs are always send after each other, only work on incomingTx */ break;
             case 'incomingTx':   renderTxs(); break;
         }
@@ -218,8 +256,10 @@ $buttonCloseNewTx.addEventListener('click', e => {
 })
 $buttonSendTx.addEventListener('click', sendTransaction);
 
-$buttonStartMining.addEventListener('click', bgPage.startMining);
-$buttonStopMining.addEventListener('click', bgPage.stopMining);
+$buttonToggleMining.addEventListener('click', e => {
+    if(!state.mining) bgPage.startMining();
+    else bgPage.stopMining();
+});
 
 $buttonShowMyWallets.addEventListener('click', e => {
     $walletManagement.classList.toggle('show');
