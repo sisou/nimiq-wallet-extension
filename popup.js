@@ -34,7 +34,7 @@ var $buttonNewTx              = document.getElementById('buttonNewTx'),
 
 // Helper functions
 function formatBalance(value) {
-    if(isNaN(value)) value = value.value;
+    if(isNaN(value)) return value;
 
     // If the value has no decimal places below 0.01, display 0 decimals
     if(parseFloat(value.toFixed(2)) === value) {
