@@ -74,7 +74,7 @@ function setStatusIndicator(status) {
 setStatusIndicator(state.status);
 
 function createIdenticon(hash) {
-    return blockies.create({seed: hash, size: 10, scale: 4});
+    return blockies.create({seed: hash, size: 8, scale: 5});
 }
 $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
 
