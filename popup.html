@@ -13,9 +13,20 @@ value "popup.html".
             box-sizing: border-box;
         }
 
+        section {
+            padding: 1em;
+        }
+
+        h2 {
+            font-weight: 600;
+            text-transform: uppercase;
+            margin: 0;
+            font-size: 1.2em;
+            line-height: 1;
+        }
+
         input {
-            padding:0.6em 0.6em;
-            margin:0 0 0.3em 0;
+            padding: 0.6em;
         }
 
         button {
@@ -41,7 +52,7 @@ value "popup.html".
 
         button.close {
             float: right;
-            padding: 0.2em 0.4em 0.1em 0.4em;
+            padding: 0.05em 0.3em 0 0.3em;
             font-size: 1.3em;
          }
 
@@ -90,6 +101,7 @@ value "popup.html".
             border: none;
             border-top: 1px solid lightgray;
             width: 80%;
+            margin-bottom: 0;
         }
 
         .icon-nimiq::before {
@@ -227,10 +239,6 @@ value "popup.html".
             color: #FFC107;
         }
 
-        #sectionActiveWallet {
-            padding: 1em;
-        }
-
         #activeWalletIdenticon {
             width: 40px;
             height: 40px;
@@ -287,6 +295,16 @@ value "popup.html".
             padding: 0.4em 0;
         }
 
+        #historyPlaceholder {
+            margin-top: 4em;
+            text-transform: uppercase;
+            opacity: 0.4;
+            font-weight: 600;
+            display: block;
+            text-align: center;
+            font-size: 1.4em;
+        }
+
 
 
         #address,
@@ -305,15 +323,14 @@ value "popup.html".
         #new-tx {
             /*display: none;*/
             width: 100%;
-            height: 100%;
+            height: 464px; /* 500 - 36 */
             background: snow;
             position: absolute;
             top: 110%;
             left: 0;
             transition: top 0.5s ease;
-            padding: 0.5em;
-            box-sizing: border-box;
             box-shadow: 0 0 10px 0 gray;
+            overflow-x: hidden;
             overflow-y: auto;
         }
         #wallet-management.show,
@@ -371,35 +388,39 @@ value "popup.html".
         </div>
     </section>
     <hr>
-    <div id="txs-list"></div>
+    <section id="sectionHistory">
+        <div id="txs-list"></div>
+        <h2>History</h2>
+        <span id="historyPlaceholder">Coming soon</span>
+    </section>
 
-    <div id="new-tx">
+    <section id="new-tx">
         <button id="button-close-new-tx" class="close">&times;</button>
-        <strong>New Transaction</strong><br>
+        <h2>New Transaction</h2><br>
         <br>
         <input type="text" id="input-tx-receiver" class="input-large" placeholder="Receiver Account Number">
         <input type="number" id="input-tx-value" class="input-large" placeholder="0.00"><br>
         <!-- <input type="text" id="input-tx-message" class="input-large" placeholder="Add a note"><br> -->
         <br>
         <button id="button-send-tx" class="button-large">Send</button>
-    </div>
+    </section>
 
-    <div id="wallet-management">
+    <section id="wallet-management">
         <button id="button-close-my-wallets" class="close">&times;</button>
-        <strong>My wallets</strong><br>
+        <h2>My wallets</h2><br>
         <div id="wallet-list"></div>
         <button id="button-show-import-wallets" class="button-large">+ Add Wallet</button>
-    </div>
+    </section>
 
-    <div id="wallet-import">
+    <section id="wallet-import">
         <button id="button-close-import-wallets" class="close">&times;</button>
-        <strong>Import Wallet</strong><br>
+        <h2>Import Wallet</h2><br>
         <input type="text" id="input-privKey"> <button id="button-import-privKey">Import Private Key</button><br>
         <br>
         <button id="button-import-betanet" class="button-large">Import from Betanet</button><br>
         <br>
         <button id="button-create-new-wallet" class="button-large">Create new Address</button>
-    </div>
+    </section>
 
     <script src="vendor/blockies.js"></script>
     <script src="popup.js"></script>
