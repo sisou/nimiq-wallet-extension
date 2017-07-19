@@ -8,6 +8,7 @@ value "popup.html".
 <head>
     <title>WALTER - Nimiq Wallet Manager</title>
     <link href="https://fonts.googleapis.com/css?family=Fira+Mono|Source+Sans+Pro:400,600" rel="stylesheet">
+    <link rel="stylesheet" href="vendor/font-awesome/css/font-awesome.min.css">
     <style>
         * {
             box-sizing: border-box;
@@ -239,7 +240,39 @@ value "popup.html".
             color: #FFC107;
         }
 
-        #activeWalletIdenticon {
+        #wallet-list {
+            overflow-y: overlay;
+        }
+
+        #wallet-list::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+            margin-left: -6px;
+        }
+
+        #wallet-list::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 3px;
+        }
+
+        .wallet-list-item {
+            overflow: auto;
+            background: #F0F0F0;
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 0.5em;
+        }
+
+        .wallet-list-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .wallet-list-item.active {
+            border-left: 4px solid #FFC107;
+            padding-left: calc(1em - 4px);
+        }
+
+        .wallet-identicon {
             width: 40px;
             height: 40px;
             float: left;
@@ -247,34 +280,59 @@ value "popup.html".
             margin-right: 0.5em;
         }
 
-        #activeWalletIdenticon > * {
+        .wallet-identicon > * {
             border-radius: 20%;
         }
 
-        #activeWalletName {
+        .wallet-name {
             float: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 280px;
             font-weight: 600;
             margin-bottom: 0.25em;
         }
 
-        #activeWalletAddress {
-            float: left;
-            text-overflow: ellipsis;
-            font-size: 12px;
-            opacity: 0.6;
-            width: 280px;
-            overflow: hidden;
+        .wallet-list-item .wallet-name {
+            width: 248px;
         }
 
-        #activeWalletBalance {
+        .wallet-address {
+            float: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .wallet-list-item .wallet-address {
+            width: 235px;
+        }
+
+        .wallet-copy-address {
+            float: right;
+            font-size: 11px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .wallet-copy-address:hover {
+            color: #042146;
+        }
+
+        .wallet-balance {
             float: right;
             font-size: 22px;
             padding-top: 0.25em;
-            padding-bottom: 0.5em;
+        }
+
+        .wallet-list-item .wallet-balance {
+            font-size: 18px;
         }
 
         #activeWalletActions {
             clear: both;
+            padding-top: 1em;
         }
 
         #buttonToggleMining {
@@ -296,13 +354,12 @@ value "popup.html".
         }
 
         #historyPlaceholder {
-            margin-top: 4em;
+            margin-top: 6em;
             text-transform: uppercase;
             opacity: 0.4;
             font-weight: 600;
             display: block;
             text-align: center;
-            font-size: 1.4em;
         }
 
 
@@ -343,7 +400,14 @@ value "popup.html".
             top: 36px;
         }
 
-        #wallet-list ul,
+        #wallet-list {
+            height: 334px;
+        }
+
+        #button-show-import-wallets {
+            margin-top: 1em;
+        }
+
         #txs-list ul {
             padding-left: 1.5em;
         }
@@ -352,8 +416,6 @@ value "popup.html".
             margin-bottom: 0.5em;
         }
     </style>
-
-    <link rel="stylesheet" href="vendor/font-awesome/css/font-awesome.min.css">
 </head>
 <body>
     <header>
@@ -377,10 +439,10 @@ value "popup.html".
     </header>
 
     <section id="sectionActiveWallet">
-        <div id="activeWalletIdenticon">&nbsp;</div>
-        <span id="activeWalletName"></span><br>
-        <hash id="activeWalletAddress"></hash><br>
-        <span id="activeWalletBalance" class="icon-nimiq"></span>
+        <div id="activeWalletIdenticon" class="wallet-identicon"><!-- DO NOT REMOVE: this comment is the required childNode that gets replaced by the identicon --></div>
+        <span id="activeWalletName" class="wallet-name"></span>&nbsp; <!-- these &nbsp; are here to guard the name and the balance against accidential selection when double-clicking the hash -->
+        <hash id="activeWalletAddress" class="wallet-address"></hash>&nbsp;<i class="fa fa-copy wallet-copy-address" title="Copy address"></i>
+        <span id="activeWalletBalance" class="wallet-balance icon-nimiq"></span>
         <div id="activeWalletActions">
             <button id="buttonToggleMining" title="Toggle mining" data-hashrate="0">Miner <i class="fa fa-power-off"></i></button>
             <button id="buttonNewTx" class="button-group-right" style="float: right">Send</button>

@@ -124,28 +124,41 @@ $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate)
 async function updateWalletList() {
     var wallets = await bgPage.listWallets();
 
-    var html = '<ul>';
-
-    console.log(wallets);
+    let walletListItems = document.createDocumentFragment();
 
     for(let address in wallets) {
-        let addressHMTL = address;
-        if(address === state.address) addressHMTL = '<strong>' + address + '</strong>';
+        let listItem = document.createElement('div');
+        listItem.classList.add('wallet-list-item');
 
-        html += '<li>';
-        html += '<input type="text" value="' + wallets[address].name + '" id="' + address + '-name">';
+        if(address === state.activeWallet.address)
+            listItem.classList.add('active');
+
+        listItem.innerHTML = `
+            <div class="wallet-identicon"></div>
+            <span class="wallet-name">${wallets[address].name}</span><br>
+            <hash class="wallet-address">${address}</hash><i class="fa fa-copy wallet-copy-address"></i><br>
+            <span class="wallet-balance icon-nimiq">${formatBalance(wallets[address].balance)}</balance>
+        `;
+
+        listItem.querySelector('.wallet-identicon').appendChild(createIdenticon(address));
+
+        walletListItems.appendChild(listItem);
+
+        /* html += '<input type="text" value="' + wallets[address].name + '" id="' + address + '-name">';
         html += '<button data-wallet="' + address + '" class="update-name">Edit</button> ';
         html += '<button data-wallet="' + address + '" class="use-wallet">Use</button> ';
         if(state.activeWallet.address && state.activeWallet.address !== address)
             html += '<button data-wallet="' + address + '" class="remove-wallet">Remove</button><br>';
-        html += '<hash>' + addressHMTL + '</hash><br>';
+        html += '<hash>' + address + '</hash><br>';
         html += 'Balance: ' + formatBalance(wallets[address].balance);
-        html += '</li>';
+        html += '</li>'; */
     }
 
-    html += '</ul>';
+    while ($walletList.firstChild) {
+        $walletList.removeChild($walletList.firstChild);
+    }
 
-    $walletList.innerHTML = html;
+    $walletList.appendChild(walletListItems);
 }
 updateWalletList();
 
