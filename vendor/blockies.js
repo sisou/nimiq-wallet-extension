@@ -100,7 +100,8 @@
 	}
 
 	function renderIcon(opts, canvas) {
-		var remainingColors = hueShift(colors.slice());
+		// var remainingColors = hueShift(colors.slice());
+		remainingColors = colors.slice();
 
 		var opts = buildOpts(opts || {}, remainingColors);
 
