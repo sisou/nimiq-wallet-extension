@@ -138,9 +138,12 @@ async function updateWalletList() {
         }
 
         listItem.innerHTML = `
-            ${active ? `<div class="wallet-identicon"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}">Use</button>` }
-            <span class="wallet-name">${wallets[address].name}</span><br>
-            <hash class="wallet-address">${address}</hash><i class="fa fa-copy wallet-copy-address"></i><br>
+            ${active ? `<div class="wallet-identicon"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`}&nbsp;
+            <span class="wallet-name">${wallets[address].name}</span> <i class="fa fa-pencil wallet-edit-name" title="Edit name"></i><br>
+            <hash class="wallet-address">${address}</hash>
+            <i class="fa fa-copy wallet-copy-address" data-wallet="${address}" title="Copy address"></i><br>
+            <i class="fa fa-key fa-fw wallet-export-privkey" data-wallet="${address}" title="Copy private key"></i>
+            ${active ? `` : `<i class="fa fa-trash-o fa-fw wallet-remove" data-wallet="${address}" title="Remove wallet"></i>`}
             <span class="wallet-balance icon-nimiq">${formatBalance(wallets[address].balance)}</span>
         `;
 
@@ -293,18 +296,23 @@ $buttonCloseImportWallets.addEventListener('click', e => {
 });
 
 $walletList.addEventListener('click', e => {
-    if(e.target.matches('button.use-wallet')) {
-        const address = e.target.getAttribute('data-wallet');
+    var target = e.target;
+
+    if(e.target.matches('canvas'))
+        target = e.target.parentNode;
+
+    if(target.matches('button.use-wallet')) {
+        const address = target.getAttribute('data-wallet');
         bgPage.switchWallet(address);
         $buttonCloseMyWallets.click();
     }
-    else if(e.target.matches('button.update-name')) {
-        const address = e.target.getAttribute('data-wallet');
+    else if(target.matches('button.update-wallet-name')) {
+        const address = target.getAttribute('data-wallet');
         const name = document.getElementById(address + '-name').value;
         updateName(address, name);
     }
-    else if(e.target.matches('button.remove-wallet')) {
-        const address = e.target.getAttribute('data-wallet');
+    else if(target.matches('i.wallet-remove')) {
+        const address = target.getAttribute('data-wallet');
         removeWallet(address);
     }
 });

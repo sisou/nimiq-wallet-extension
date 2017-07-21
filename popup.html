@@ -207,15 +207,14 @@ value "popup.html".
         header h1 {
             font-size: 19px;
             font-weight: 600;
-            text-transform: uppercase;
-            line-height: 0.75em;
+            /*text-transform: uppercase;*/
+            line-height: 26px;
             position: absolute;
             top: 0;
             left: 36px;
         }
 
         header h1 span {
-            display: block;
             font-size: 12px;
             opacity: 0.5;
         }
@@ -227,6 +226,7 @@ value "popup.html".
         }
 
         header nav button {
+            width: 2em;
             line-height: 34px !important;
             background: transparent !important;
             padding: 1px 6px; /* Chrome user agent style */
@@ -279,6 +279,7 @@ value "popup.html".
 
         .wallet-identicon {
             width: 40px;
+            height: 63px;
             float: left;
             border-radius: 8px;
             margin-right: 0.5em;
@@ -286,6 +287,26 @@ value "popup.html".
 
         .wallet-identicon > * {
             border-radius: 8px;
+        }
+
+        .wallet-list-item .fa,
+        #sectionActiveWallet .fa {
+            font-size: 12px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .wallet-list-item .fa:hover {
+            color: #042146;
+        }
+
+        .wallet-list-item .fa-trash-o,
+        .wallet-list-item .fa-key {
+            margin-top: 1em;
+        }
+
+        .wallet-list-item .fa-trash-o:hover {
+            color: firebrick;
         }
 
         .wallet-name {
@@ -298,7 +319,12 @@ value "popup.html".
         }
 
         .wallet-list-item .wallet-name {
-            width: 248px;
+            width: auto;
+            max-width: 228px;
+        }
+
+        .wallet-edit-name {
+            margin-left: 0.5em;
         }
 
         .wallet-address {
@@ -310,7 +336,7 @@ value "popup.html".
         }
 
         #activeWalletAddress {
-            width: 259px;
+            width: 258px;
         }
 
         .wallet-list-item .wallet-address {
@@ -319,13 +345,6 @@ value "popup.html".
 
         .wallet-copy-address {
             float: right;
-            font-size: 11px;
-            cursor: pointer;
-            color: #888;
-        }
-
-        .wallet-copy-address:hover {
-            color: #042146;
         }
 
         .wallet-balance {
