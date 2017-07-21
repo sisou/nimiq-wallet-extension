@@ -130,17 +130,21 @@ async function updateWalletList() {
         let listItem = document.createElement('div');
         listItem.classList.add('wallet-list-item');
 
-        if(address === state.activeWallet.address)
+        let active = false;
+
+        if(address === state.activeWallet.address) {
             listItem.classList.add('active');
+            active = true;
+        }
 
         listItem.innerHTML = `
-            <div class="wallet-identicon"></div>
+            ${active ? `<div class="wallet-identicon"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}">Use</button>` }
             <span class="wallet-name">${wallets[address].name}</span><br>
             <hash class="wallet-address">${address}</hash><i class="fa fa-copy wallet-copy-address"></i><br>
-            <span class="wallet-balance icon-nimiq">${formatBalance(wallets[address].balance)}</balance>
+            <span class="wallet-balance icon-nimiq">${formatBalance(wallets[address].balance)}</span>
         `;
 
-        listItem.querySelector('.wallet-identicon').appendChild(createIdenticon(address));
+        listItem.querySelector('.wallet-identicon').insertBefore(createIdenticon(address), listItem.querySelector('.wallet-identicon').firstChild);
 
         walletListItems.appendChild(listItem);
 
