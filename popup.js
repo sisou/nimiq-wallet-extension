@@ -186,30 +186,30 @@ async function updateWalletList() {
 }
 updateWalletList();
 
-function renderTxs() {
+function renderTxs(outgoingTx, incomingTx) {
     var html = '';
 
-    if(state.outgoingTx.length) {
+    if(outgoingTx.length) {
         html += '<strong>Pending Outgoing Transactions</strong><ul>';
-        for(tx of state.outgoingTx) {
-            html += '<li><hash>' + tx.receiver + '</hash>: ' + formatBalance(tx.value) + /*'<br><em>' + tx.message + '</em>' + */'</li>';
+        for(tx of outgoingTx) {
+            html += '<li>To: <hash style="font-size: 11px;">' + tx.receiver + '</hash><br>- <span class="icon-nimiq">' + formatBalance(tx.value)  + '</span>' + /*'<br><em>' + tx.message + '</em>' + */'</li>';
         }
         html += '</ul>';
     }
 
-    if(state.incomingTx.length) {
+    if(incomingTx.length) {
         html += '<strong>Pending Incoming Transactions</strong><ul>';
-        for(tx of state.incomingTx) {
-            html += '<li><hash>' + tx.sender + '</hash>: ' + formatBalance(tx.value) + /*'<br><em>' + tx.message + '</em>' + */'</li>';
+        for(tx of incomingTx) {
+            html += '<li>From: <hash style="font-size: 11px;">' + tx.sender + '</hash><br>+ <span class="icon-nimiq">' + formatBalance(tx.value) + '</span>' + /*'<br><em>' + tx.message + '</em>' + */'</li>';
         }
         html += '</ul>';
     }
 
-    if(html !== '') html = '<hr>' + html;
+    if(html !== '') html = html + '<hr>';
 
     $txsList.innerHTML = html;
 }
-renderTxs();
+renderTxs(state.outgoingTx, state.incomingTx);
 
 function handleStatus(status) {
     if(state.restarting && status === 'Consensus lost')
