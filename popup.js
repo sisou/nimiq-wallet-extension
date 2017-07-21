@@ -140,8 +140,8 @@ async function updateWalletList() {
         }
 
         listItem.innerHTML = `
-            ${active ? `<div class="wallet-identicon"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`}&nbsp;
-            <span class="wallet-name">${wallets[address].name}</span> <i class="fa fa-pencil wallet-edit-name" title="Edit name"></i><br>
+            ${active ? `<div class="wallet-identicon" title="Active wallet"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`}&nbsp;
+            <span class="wallet-name">${wallets[address].name}</span> <i class="fa fa-pencil wallet-edit-name" title="Edit name"></i>
             <hash class="wallet-address">${address}</hash>
             <i class="fa fa-copy wallet-copy-address" data-wallet="${address}" title="Copy address"></i><br>
             <i class="fa fa-key fa-fw wallet-export-privkey" data-wallet="${address}" title="Copy private key"></i>
@@ -344,7 +344,11 @@ $walletList.addEventListener('click', e => {
     }
     else if(target.matches('i.wallet-export-privkey')) {
         const address = target.getAttribute('data-wallet');
-        // clipboard(address);
+        bgPage.store.get('wallets', function(items) {
+            var wallets = items.wallets;
+            var key = wallets[address].key;
+            clipboard(key);
+        });
     }
     else if(target.matches('i.wallet-remove')) {
         const address = target.getAttribute('data-wallet');
