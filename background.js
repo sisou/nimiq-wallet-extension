@@ -181,7 +181,7 @@ function startNimiq(params) {
         });
 
         $.consensus.on('syncing', (targetHeight) => {
-            updateState({status: 'Syncing', targetHeight});
+            updateState({status: 'Syncing'});
             updateState({targetHeight: targetHeight});
         });
         $.consensus.on('established', () => _onConsensusEstablished());

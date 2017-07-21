@@ -10,7 +10,9 @@ var $address          = document.getElementById('activeWalletAddress'),
     $statusIndicator  = document.getElementById('statusIndicator'),
     $status           = document.getElementById('status'),
     $height           = document.getElementById('height'),
-    // $targetHeight     = document.getElementById('targetHeight'),
+    $loadingScreen    = document.getElementById('loading-screen'),
+    $loadingHeight    = document.getElementById('loading-height'),
+    $loadingProgress  = document.getElementById('loading-progress-bar'),
     $peers            = document.getElementById('peers'),
     $walletManagement = document.getElementById('wallet-management'),
     $walletImport     = document.getElementById('wallet-import'),
@@ -49,6 +51,9 @@ function formatBalance(value) {
 // Set up initial values
 var bgPage = chrome.extension.getBackgroundPage(),
     state  = bgPage.state;
+
+if(state.status !== 'Consensus established') $loadingScreen.classList.add('show-instant');
+state.restarting = false;
 
 $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')');
 $name.innerText            = state.activeWallet.name;
@@ -124,6 +129,8 @@ function formatHashrate(value) {
 $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate));
 
 async function updateWalletList() {
+    if(state.status !== 'Consensus established') return;
+
     var wallets = await bgPage.listWallets();
 
     let walletListItems = document.createDocumentFragment();
@@ -141,7 +148,15 @@ async function updateWalletList() {
 
         listItem.innerHTML = `
             ${active ? `<div class="wallet-identicon" title="Active wallet"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`}&nbsp;
+
             <span class="wallet-name">${wallets[address].name}</span> <i class="fa fa-pencil wallet-edit-name" title="Edit name"></i>
+
+            <span class="wallet-name-input">
+                <input type="text" value="${wallets[address].name}" data-original-value="${wallets[address].name}">
+                <i class="fa fa-check wallet-update-name" data-wallet="${address}" title="Save"></i>
+                <i class="fa fa-times wallet-cancel-name" title="Cancel"></i>
+            </span>
+
             <hash class="wallet-address">${address}</hash>
             <i class="fa fa-copy wallet-copy-address" data-wallet="${address}" title="Copy address"></i><br>
             <i class="fa fa-key fa-fw wallet-export-privkey" data-wallet="${address}" title="Copy private key"></i>
@@ -196,6 +211,43 @@ function renderTxs() {
 }
 renderTxs();
 
+function handleStatus(status) {
+    if(state.restarting && status === 'Consensus lost')
+        state.restarting = false;
+
+    $status.innerText = status;
+    setStatusIndicator(status);
+    updateWalletList();
+}
+
+function handleHeight(height) {
+    if(state.status === 'Consensus established') {
+        $height.innerText = height;
+        updateWalletList();
+    }
+    else {
+        // TODO Check if consensus established is triggered before the last height updateWalletList
+        // If not, the above conditional section has to be triggered manually
+
+        $loadingHeight.innerText = height;
+
+        // Set loading-bar progress
+        $loadingProgress.style.width = ((height - state.startHeight) / (state.targetHeight - state.startHeight) * 100) + '%';
+    }
+}
+
+function handleTargetHeight(targetHeight) {
+    if(targetHeight > 0) {
+        state.startHeight = state.height;
+        document.getElementById('loading-targetHeight').innerText = '/' + targetHeight;
+    }
+    else if(!state.restarting) {
+        handleHeight(state.height);
+        $loadingScreen.classList.remove('show-instant');
+        document.getElementById('loading-targetHeight').innerText = '';
+    }
+}
+
 // Listen for updates from the background script
 function messageReceived(update) {
     console.log("message received:", update);
@@ -222,14 +274,14 @@ function messageReceived(update) {
                                  $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
                                  updateWalletList();
                                  break;
-            case 'status':       $status.innerText       = state.status;  setStatusIndicator(state.status); updateWalletList(); break;
-            case 'height':       $height.innerText       = state.height;  updateWalletList(); break;
-            // case 'targetHeight': $targetHeight.innerText = state.targetHeight; break;
+            case 'status':       handleStatus(state.status); break;
+            case 'height':       handleHeight(state.height); break;
+            case 'targetHeight': handleTargetHeight(state.targetHeight); break;
             case 'peers':        $peers.innerText        = state.peers; break;
             case 'mining':       setMinerStatus(state.mining); break;
             case 'hashrate':     $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate)); break;
             case 'outgoingTx':   /* since outgoing and incoming txs are always send after each other, only work on incomingTx */ break;
-            case 'incomingTx':   renderTxs(); break;
+            case 'incomingTx':   renderTxs(state.outgoingTx, state.incomingTx); break;
         }
     }
 }
@@ -329,14 +381,32 @@ $walletList.addEventListener('click', e => {
         target = e.target.parentNode;
 
     if(target.matches('button.use-wallet')) {
+        state.restarting = true;
+        $loadingScreen.classList.add('show-instant');
+
         const address = target.getAttribute('data-wallet');
         bgPage.switchWallet(address);
         $buttonCloseMyWallets.click();
     }
-    else if(target.matches('button.update-wallet-name')) {
+    else if(target.matches('i.wallet-edit-name')) {
+        target.parentNode.querySelector('.wallet-name').style.display = 'none';
+        target.style.display = 'none';
+
+        target.parentNode.querySelector('.wallet-name-input').style.display = 'initial';
+        target.parentNode.querySelector('input').select();
+    }
+    else if(target.matches('i.wallet-update-name')) {
         const address = target.getAttribute('data-wallet');
-        const name = document.getElementById(address + '-name').value;
+        const name = target.parentNode.querySelector('input').value;
         updateName(address, name);
+    }
+    else if(target.matches('i.wallet-cancel-name')) {
+        var input = target.parentNode.querySelector('input');
+        input.parentNode.style.display = 'none';
+        input.value = input.getAttribute('data-original-value');
+
+        target.parentNode.parentNode.querySelector('.wallet-name').style.display = 'initial';
+        target.parentNode.parentNode.querySelector('.wallet-edit-name').style.display = 'initial';
     }
     else if(target.matches('i.wallet-copy-address')) {
         const address = target.getAttribute('data-wallet');
