@@ -419,7 +419,7 @@ value "popup.html".
             top: 36px;
         }
 
-        
+
         #wallet-import.show-instant {
             transition: none;
             top: 36px;
@@ -435,6 +435,30 @@ value "popup.html".
 
         li {
             margin-bottom: 0.5em;
+        }
+
+        #toast {
+            display: none;
+            position: absolute;
+            top: calc(50% - 0.8em);
+            width: 100%;
+            text-align: center;
+        }
+
+        #toast.show {
+            display: initial;
+        }
+
+        #toast.fade-out {
+            transition: opacity 0.3s linear;
+            opacity: 0;
+        }
+
+        #toast-msg {
+            padding: 0.3em 0.7em;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -461,7 +485,8 @@ value "popup.html".
     <section id="sectionActiveWallet">
         <div id="activeWalletIdenticon" class="wallet-identicon"><!-- DO NOT REMOVE: this comment is the required childNode that gets replaced by the identicon --></div>
         <span id="activeWalletName" class="wallet-name"></span>&nbsp; <!-- these &nbsp; are here to guard the name and the balance against accidential selection when double-clicking the hash -->
-        <hash id="activeWalletAddress" class="wallet-address"></hash>&nbsp;<i class="fa fa-copy wallet-copy-address" title="Copy address"></i>
+        <hash id="activeWalletAddress" class="wallet-address"></hash>&nbsp;
+        <i id="buttonActiveWalletCopyAddress" class="fa fa-copy wallet-copy-address" title="Copy address"></i>
         <span id="activeWalletBalance" class="wallet-balance icon-nimiq"></span>
         <div id="activeWalletActions">
             <button id="buttonToggleMining" title="Toggle mining" data-hashrate="0">Miner <i class="fa fa-power-off"></i></button>
@@ -503,6 +528,8 @@ value "popup.html".
         <br>
         <button id="button-create-new-wallet" class="button-large">Create new Address</button>
     </section>
+
+    <div id="toast"><span id="toast-msg">Copied!</span></div>
 
     <script src="vendor/blockies.js"></script>
     <script src="popup.js"></script>

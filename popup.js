@@ -14,10 +14,12 @@ var $address          = document.getElementById('activeWalletAddress'),
     $peers            = document.getElementById('peers'),
     $walletManagement = document.getElementById('wallet-management'),
     $walletImport     = document.getElementById('wallet-import'),
-    $walletList       = document.getElementById('wallet-list');
+    $walletList       = document.getElementById('wallet-list'),
+    $toast            = document.getElementById('toast');
 
 // Cache all input elements
-var $buttonNewTx              = document.getElementById('buttonNewTx'),
+var $buttonCopyAddress        = document.getElementById('buttonActiveWalletCopyAddress'),
+    $buttonNewTx              = document.getElementById('buttonNewTx'),
     $buttonCloseNewTx         = document.getElementById('button-close-new-tx'),
     $inputTxReceiver          = document.getElementById('input-tx-receiver'),
     $inputTxValue             = document.getElementById('input-tx-value'),
@@ -267,7 +269,32 @@ async function removeWallet(address) {
     updateWalletList();
 }
 
+function clipboard(data) {
+    var input = document.createElement('input');
+    input.setAttribute('type', 'text');
+    input.value = data;
+
+    $walletList.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    $walletList.removeChild(input);
+
+    $toast.classList.remove('show', 'fade-out');
+    $toast.classList.add('show');
+
+    window.setTimeout(() => {
+        $toast.classList.add('fade-out');
+    }, 200);
+
+    window.setTimeout(() => {
+        $toast.classList.remove('show', 'fade-out');
+    }, 500); // 200 + 300 from CSS transition
+}
+
 // Attach input listeners
+$buttonCopyAddress.addEventListener('click', e => {
+    clipboard(state.activeWallet.address);
+});
 $buttonNewTx.addEventListener('click', e => {
     $newTx.classList.add('show');
 });
@@ -310,6 +337,14 @@ $walletList.addEventListener('click', e => {
         const address = target.getAttribute('data-wallet');
         const name = document.getElementById(address + '-name').value;
         updateName(address, name);
+    }
+    else if(target.matches('i.wallet-copy-address')) {
+        const address = target.getAttribute('data-wallet');
+        clipboard(address);
+    }
+    else if(target.matches('i.wallet-export-privkey')) {
+        const address = target.getAttribute('data-wallet');
+        // clipboard(address);
     }
     else if(target.matches('i.wallet-remove')) {
         const address = target.getAttribute('data-wallet');
