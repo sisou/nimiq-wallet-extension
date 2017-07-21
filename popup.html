@@ -30,6 +30,12 @@ value "popup.html".
             padding: 0.6em;
         }
 
+        hash {
+            font-family: "Fira Mono", monospace;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
         button {
             color: white;
             border: none;
@@ -212,6 +218,7 @@ value "popup.html".
             position: absolute;
             top: 0;
             left: 36px;
+            margin: 0.2em 0;
         }
 
         header h1 span {
@@ -242,6 +249,7 @@ value "popup.html".
 
         #wallet-list {
             overflow-y: overlay;
+            height: 334px;
         }
 
         #wallet-list::-webkit-scrollbar {
@@ -390,18 +398,6 @@ value "popup.html".
         }
 
 
-
-        #address,
-        hash {
-            font-family: "Fira Mono", monospace;
-            text-transform: uppercase;
-            letter-spacing: -0.02em;
-        }
-
-        h1 {
-            margin: 0.2em 0;
-        }
-
         #wallet-management,
         #wallet-import,
         #new-tx {
@@ -422,13 +418,11 @@ value "popup.html".
         #new-tx.show {
             top: 36px;
         }
+
+        
         #wallet-import.show-instant {
             transition: none;
             top: 36px;
-        }
-
-        #wallet-list {
-            height: 334px;
         }
 
         #button-show-import-wallets {
