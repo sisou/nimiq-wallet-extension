@@ -52,7 +52,7 @@ function formatBalance(value) {
 var bgPage = chrome.extension.getBackgroundPage(),
     state  = bgPage.state;
 
-if(state.status !== 'Consensus established') $loadingScreen.classList.add('show-instant');
+if(state.status !== 'Consensus established' && state.numberOfWallets > 0) $loadingScreen.classList.add('show-instant');
 state.restarting = false;
 
 $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')');
@@ -249,13 +249,15 @@ function handleTargetHeight(targetHeight) {
 }
 
 // Listen for updates from the background script
-function messageReceived(update) {
+async function messageReceived(update) {
     console.log("message received:", update);
 
     var key = Object.keys(update)[0];
 
     if(key === 'privKey') {
-        importPrivateKey(update.privKey);
+        var address = await importPrivateKey(update.privKey);
+        if(!state.activeWallet.address) switchWallet(address);
+        $buttonCloseImportWallets.click();
     }
     else {
         if(key === 'balance') {
@@ -300,8 +302,9 @@ async function sendTransaction() {
 }
 
 async function importPrivateKey(key) {
-    await bgPage.importPrivateKey(key);
+    var address = await bgPage.importPrivateKey(key);
     updateWalletList();
+    return address;
 }
 
 async function updateName(address, name) {
@@ -310,8 +313,9 @@ async function updateName(address, name) {
 }
 
 async function createNewWallet() {
-    await bgPage.createNewWallet();
+    var address = await bgPage.createNewWallet();
     updateWalletList();
+    return address;
 }
 
 async function removeWallet(address) {
@@ -319,6 +323,15 @@ async function removeWallet(address) {
 
     await bgPage.removeWallet(address);
     updateWalletList();
+}
+
+function switchWallet(address) {
+    if(state.activeWallet.address)
+        state.restarting = true;
+
+    $loadingScreen.classList.add('show-instant');
+
+    bgPage.switchWallet(address);
 }
 
 function clipboard(data) {
@@ -381,11 +394,8 @@ $walletList.addEventListener('click', e => {
         target = e.target.parentNode;
 
     if(target.matches('button.use-wallet')) {
-        state.restarting = true;
-        $loadingScreen.classList.add('show-instant');
-
         const address = target.getAttribute('data-wallet');
-        bgPage.switchWallet(address);
+        switchWallet(address);
         $buttonCloseMyWallets.click();
     }
     else if(target.matches('i.wallet-edit-name')) {
@@ -426,8 +436,9 @@ $walletList.addEventListener('click', e => {
     }
 });
 
-$buttonImportPrivKey.addEventListener('click', e => {
-    importPrivateKey($inputPrivKey.value);
+$buttonImportPrivKey.addEventListener('click', async e => {
+    var address = await importPrivateKey($inputPrivKey.value);
+    if(!state.activeWallet.address) switchWallet(address);
     $buttonCloseImportWallets.click();
 });
 $buttonImportBetanet.addEventListener('click', e => {
@@ -435,14 +446,14 @@ $buttonImportBetanet.addEventListener('click', e => {
         var tab = tabs[0];
         if(tab.url === 'https://nimiq.com/betanet/') {
             chrome.tabs.executeScript({file: "extract_betanet_key.js"});
-            $buttonCloseImportWallets.click();
         }
         else {
             window.open('https://nimiq.com/betanet','_newtab');
         }
     });
 });
-$buttonNewWallet.addEventListener('click', e => {
-    createNewWallet();
+$buttonNewWallet.addEventListener('click', async e => {
+    var address = await createNewWallet();
+    if(!state.activeWallet.address) switchWallet(address);
     $buttonCloseImportWallets.click();
 });

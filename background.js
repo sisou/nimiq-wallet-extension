@@ -300,7 +300,7 @@ async function importPrivateKey(privKey, name) {
             var wallets = items.wallets;
 
             // If this is the first wallet created, activate it
-            var activate = Object.keys(wallets).length === 0;
+            // var activate = Object.keys(wallets).length === 0;
 
             wallets[address] = {
                 name: name,
@@ -309,7 +309,7 @@ async function importPrivateKey(privKey, name) {
 
             store.set({wallets: wallets}, function() {
                 if(chrome.runtime.lastError) console.log(runtime.lastError);
-                else if(activate)
+                else /*if(activate)
                     store.set({active: address}, function() {
                         if(chrome.runtime.lastError) console.log(runtime.lastError);
                         else {
@@ -319,10 +319,10 @@ async function importPrivateKey(privKey, name) {
                             resolve();
                         }
                     });
-                else {
+                else */{
                     console.log("Stored", address);
                     updateState({numberOfWallets: Object.keys(wallets).length});
-                    resolve();
+                    resolve(address);
                 }
             });
         });
