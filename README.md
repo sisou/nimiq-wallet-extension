@@ -1,10 +1,10 @@
 # nimiq-wallet-extension
 
-> Developed for Chrome, but should also work in Firefox, Opera and other WebKit-based browsers.
+> Developed for Chrome, but may also work in Firefox, Opera and other WebKit-based browsers.
 
-**This extension is currently being developed and not available on the Chrome Web Store.**
+**[This extension is available on the Chrome Web Store](https://chrome.google.com/webstore/detail/nima-nimiq-wallet-manager/jfijpdoopiaiahclhnfoibiohfnjpcfo)**
 
-## Installation
+## Installation for development
 To install, follow these instructions: https://developer.chrome.com/extensions/getstarted#unpacked
 
 ## Usage
