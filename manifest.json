@@ -4,7 +4,7 @@
   "name": "NIMA - Nimiq Wallet Manager",
   "short_name": "NIMA",
   "description": "Manage your Nimiq wallets directly in your browser.",
-  "version": "0.1.0",
+  "version": "0.1.1",
 
   "icons": {
      "16": "app-icon-16x16.png",
@@ -22,7 +22,7 @@
   },
 
   "browser_action": {
-    "default_icon": "nimiq-wallet-icon.png",
+    "default_icon": "app-icon-19x19.png",
     "default_popup": "popup.html"
   },
   "incognito": "split",
