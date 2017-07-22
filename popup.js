@@ -238,15 +238,17 @@ function handleHeight(height) {
 
 function handleTargetHeight(targetHeight) {
     if(targetHeight > 0) {
-        state.startHeight = state.height;
+        state.startHeight = state.startHeight || state.height;
         document.getElementById('loading-targetHeight').innerText = '/' + targetHeight;
     }
     else if(!state.restarting) {
+        delete state.startHeight;
         handleHeight(state.height);
         $loadingScreen.classList.remove('show-instant');
         document.getElementById('loading-targetHeight').innerText = '';
     }
 }
+if(state.targetHeight > 0) handleTargetHeight(state.targetHeight);
 
 // Listen for updates from the background script
 async function messageReceived(update) {
