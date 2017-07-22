@@ -1,2 +1,0 @@
-var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(<privateKey>)).publicKey.toAddress();
-    address = address.toHex();
