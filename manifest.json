@@ -2,6 +2,7 @@
   "manifest_version": 2,
 
   "name": "NIMA - Nimiq Wallet Manager",
+  "short_name": "NIMA",
   "description": "Manage your Nimiq wallets directly in your browser.",
   "version": "0.1.0",
 
