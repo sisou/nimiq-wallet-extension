@@ -319,7 +319,7 @@ async function createNewWallet() {
 }
 
 async function removeWallet(address) {
-    if(!confirm('Do you really want to remove this wallet?\n\n' + address.toUpperCase())) return;
+    if(!confirm('Do you really want to un-manage this wallet?\n\n' + address.toUpperCase())) return;
 
     await bgPage.removeWallet(address);
     updateWalletList();
