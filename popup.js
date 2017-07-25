@@ -258,7 +258,10 @@ async function messageReceived(update) {
 
     if(key === 'privKey') {
         var address = await importPrivateKey(update.privKey);
-        if(!state.activeWallet.address) switchWallet(address);
+        if(!state.activeWallet.address) {
+            switchWallet(address);
+            $buttonCloseImportWallets.classList.remove('show-instant');
+        }
         $buttonCloseImportWallets.click();
     }
     else {
@@ -386,7 +389,7 @@ $buttonShowImportWallets.addEventListener('click', e => {
     $walletImport.classList.add('show');
 });
 $buttonCloseImportWallets.addEventListener('click', e => {
-    $walletImport.classList.remove('show', 'show-instant');
+    $walletImport.classList.remove('show');
 });
 
 $walletList.addEventListener('click', e => {
@@ -440,7 +443,10 @@ $walletList.addEventListener('click', e => {
 
 $buttonImportPrivKey.addEventListener('click', async e => {
     var address = await importPrivateKey($inputPrivKey.value);
-    if(!state.activeWallet.address) switchWallet(address);
+    if(!state.activeWallet.address) {
+        switchWallet(address);
+        $buttonCloseImportWallets.classList.remove('show-instant');
+    }
     $buttonCloseImportWallets.click();
 });
 $buttonImportBetanet.addEventListener('click', e => {
@@ -456,6 +462,9 @@ $buttonImportBetanet.addEventListener('click', e => {
 });
 $buttonNewWallet.addEventListener('click', async e => {
     var address = await createNewWallet();
-    if(!state.activeWallet.address) switchWallet(address);
+    if(!state.activeWallet.address) {
+        switchWallet(address);
+        $buttonCloseImportWallets.classList.remove('show-instant');
+    }
     $buttonCloseImportWallets.click();
 });
