@@ -314,6 +314,7 @@ async function importPrivateKey(key) {
 
 async function updateName(address, name) {
     await bgPage.updateName(address, name);
+    showToast('Saved!');
     updateWalletList();
 }
 
@@ -339,6 +340,22 @@ function switchWallet(address) {
     bgPage.switchWallet(address);
 }
 
+function showToast(msg) {
+    $toast.classList.remove('show', 'fade-out');
+
+    $toast.firstChild.innerText = msg;
+
+    $toast.classList.add('show');
+
+    window.setTimeout(() => {
+        $toast.classList.add('fade-out');
+    }, 200);
+
+    window.setTimeout(() => {
+        $toast.classList.remove('show', 'fade-out');
+    }, 500); // 200 + 300 from CSS transition
+}
+
 function clipboard(data) {
     var input = document.createElement('input');
     input.setAttribute('type', 'text');
@@ -349,16 +366,7 @@ function clipboard(data) {
     document.execCommand('copy');
     $walletList.removeChild(input);
 
-    $toast.classList.remove('show', 'fade-out');
-    $toast.classList.add('show');
-
-    window.setTimeout(() => {
-        $toast.classList.add('fade-out');
-    }, 200);
-
-    window.setTimeout(() => {
-        $toast.classList.remove('show', 'fade-out');
-    }, 500); // 200 + 300 from CSS transition
+    showToast('Copied!');
 }
 
 // Attach input listeners
