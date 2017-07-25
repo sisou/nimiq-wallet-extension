@@ -1,0 +1,517 @@
+* {
+    box-sizing: border-box;
+}
+
+section {
+    padding: 1em;
+}
+
+h2 {
+    font-weight: 600;
+    text-transform: uppercase;
+    margin: 0;
+    margin-bottom: 1em;
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+input {
+    padding: 0.6em;
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 16px;
+}
+
+hash {
+    font-family: "Fira Mono", monospace;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+}
+
+button {
+    color: white;
+    border: none;
+    padding: 0.6em 1.2em;
+    border-radius: 3px;
+    text-align: center;
+    background: #042146;
+    cursor: pointer;
+    /*transition:all 0.2s;*/
+    font-weight: 600;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    outline: none;
+}
+
+button:hover {
+    background: #FFC107;
+    color: #042146;
+}
+
+button.close {
+    float: right;
+    padding: 0.05em 0.3em 0 0.3em;
+    font-size: 1.3em;
+ }
+
+button.button-large,
+input.input-large {
+    padding: 1em 0;
+    text-align: center;
+    width: 100%;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+button:disabled:hover {
+    background: #042146;
+    color: white;
+}
+
+button i {
+    letter-spacing: normal;
+}
+
+.button-group-left {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 2px solid snow;
+}
+
+.button-group-middle {
+    border-radius: 0;
+    border-right: 2px solid snow;
+}
+
+.button-group-right {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+label {
+    color: #888;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid lightgray;
+    width: 290px;
+    margin-bottom: 0;
+}
+
+.icon-nimiq::before {
+    content: "";
+    height: 0.65em;
+    width: 0.75em;
+    display: inline-block;
+    background-image: url('nimiq_blue.svg');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    margin-right: 0.2em;
+}
+
+body {
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 100%;
+    width: 360px;
+    height: 500px;
+    background: snow;
+    color: #042146;
+    margin: 0;
+}
+
+header {
+    position: relative;
+    width: 100%;
+    background: #042146;
+    color: white;
+    padding: 0.1em 0;
+    height: 36px;
+}
+
+#statusWrapper {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+}
+
+#statusIndicator {
+    border-radius: 50%;
+    border: 2px solid white;
+    background: firebrick;
+    width: 16px;
+    height: 16px;
+    margin: 7px;
+}
+
+#statusIndicator.yellow {
+    background: gold;
+}
+
+#statusIndicator.green {
+    background: limegreen;
+}
+
+#statusPopup {
+    display: none;
+    position: absolute;
+    top: 23px;
+    left: 4px;
+    width: 250px;
+    background: snow;
+    color: #042146;
+    border: 1px solid #042146;
+    border-radius: 3px;
+    padding: 0.5em;
+    z-index: 9000;
+}
+
+/* triangle border */
+#statusPopup::before {
+    content: "";
+    border: 6px solid;
+    border-color: transparent transparent #042146 transparent;
+    position: absolute;
+    top: -13px;
+    left: 4px;
+}
+
+/* triangle */
+#statusPopup::after {
+    content: "";
+    border: 6px solid;
+    border-color: transparent transparent snow transparent;
+    position: absolute;
+    top: -12px;
+    left: 4px;
+}
+
+#statusWrapper:hover #statusPopup {
+    display: block;
+}
+
+.equalize-row {
+    padding: 0.2em 0;
+}
+
+.equalize-row span {
+    float: right;
+}
+
+header h1 {
+    font-size: 19px;
+    font-weight: 600;
+    /*text-transform: uppercase;*/
+    line-height: 26px;
+    position: absolute;
+    top: 0;
+    left: 36px;
+    margin: 0.2em 0;
+}
+
+header h1 span {
+    font-size: 12px;
+    opacity: 0.5;
+}
+
+header nav {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+header nav button {
+    width: 2em;
+    line-height: 34px !important;
+    background: transparent !important;
+    padding: 1px 6px; /* Chrome user agent style */
+    color: white;
+    border: none;
+    cursor: pointer;
+    outline: none;
+}
+
+header nav button:hover {
+    color: #FFC107;
+}
+
+#wallet-list {
+    overflow-y: overlay;
+    height: 334px;
+}
+
+#wallet-list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    margin-left: -6px;
+}
+
+#wallet-list::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 3px;
+}
+
+.wallet-list-item {
+    overflow: auto;
+    background: #F0F0F0;
+    padding: 1em;
+    border-radius: 4px;
+    margin-bottom: 0.5em;
+}
+
+.wallet-list-item:last-child {
+    margin-bottom: 0;
+}
+
+.wallet-list-item.active {
+    border-left: 4px solid #FFC107;
+    padding-left: calc(1em - 4px);
+}
+
+.wallet-list-item button {
+    padding: 0;
+    padding-bottom: 4px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.wallet-identicon {
+    width: 40px;
+    height: 63px;
+    float: left;
+    border-radius: 8px;
+    margin-right: 0.5em;
+}
+
+.wallet-identicon > * {
+    border-radius: 8px;
+}
+
+.wallet-list-item .fa,
+#sectionActiveWallet .fa {
+    font-size: 12px;
+    cursor: pointer;
+    color: #888;
+}
+
+.wallet-list-item .fa:hover {
+    color: #042146;
+}
+
+.wallet-list-item .fa-trash-o,
+.wallet-list-item .fa-key {
+    margin-top: 1em;
+}
+
+.wallet-list-item .fa-trash-o:hover {
+    color: firebrick;
+}
+
+.wallet-name {
+    float: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 280px;
+    font-weight: 600;
+    margin-bottom: 0.25em;
+}
+
+.wallet-list-item .wallet-name {
+    width: auto;
+    max-width: 230px;
+}
+
+.wallet-name-input {
+    float: left;
+    display: none;
+}
+
+.wallet-list-item input {
+    padding: initial;
+}
+
+.wallet-address {
+    float: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+    color: #888;
+}
+
+#activeWalletAddress {
+    width: 258px;
+}
+
+.wallet-list-item .wallet-address {
+    width: 235px;
+}
+
+.wallet-copy-address {
+    float: right;
+}
+
+.wallet-balance {
+    float: right;
+    font-size: 22px;
+    padding-top: 0.25em;
+}
+
+.wallet-list-item .wallet-balance {
+    font-size: 18px;
+}
+
+#activeWalletActions {
+    clear: both;
+    padding-top: 1em;
+}
+
+#buttonToggleMining {
+    position: relative;
+}
+
+#buttonToggleMining.mining::after {
+    content: attr(data-hashrate);
+    color: #888;
+    white-space: nowrap;
+    font-weight: normal;
+    font-size: 12px;
+    text-transform: none;
+    position: absolute;
+    bottom: -24px;
+    left: 0;
+    width: 100%;
+    padding: 0.4em 0;
+}
+
+#historyPlaceholder {
+    margin-top: 2em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    font-weight: 600;
+    display: block;
+    text-align: center;
+}
+
+
+#wallet-management,
+#wallet-import,
+#new-tx,
+#loading-screen {
+    /*display: none;*/
+    width: 100%;
+    height: 464px; /* 500 - 36 */
+    background: snow;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    transition: top 0.5s ease;
+    box-shadow: 0 0 10px 0 gray;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#loading-screen {
+    height: 500px;
+    padding: 0;
+    /*background: #042146;
+    color: white;*/
+}
+
+#wallet-management.show,
+#wallet-import.show,
+#new-tx.show {
+    top: 36px;
+}
+
+#wallet-import.show-instant,
+#loading-screen.show-instant {
+    transition: none;
+    top: 36px;
+}
+
+#loading-screen.show-instant {
+    top: 0;
+}
+
+#button-show-import-wallets {
+    margin-top: 1em;
+}
+
+#txs-list {
+    margin-bottom: 1em;
+}
+
+#txs-list ul {
+    padding-left: 1.5em;
+    margin: 0.5em 0 1em;
+}
+
+li {
+    margin-bottom: 0.5em;
+}
+
+#loading-loader {
+    width: 34px;
+    height: 30px;
+
+    margin: 50% auto 0;
+    animation: sk-rotateplane 1.2s infinite ease-in-out;
+}
+
+#loading-loader img {
+    width: 34px;
+    height: 30px;
+}
+
+@keyframes sk-rotateplane {
+    0%   { transform: perspective(120px) rotateX(0deg) rotateY(0deg); }
+    50%  { transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg); }
+    100% { transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg); }
+}
+
+#loading-progress-container {
+    width: 150px;
+    background-color: #DDD;
+    height: 4px;
+    margin: 1em auto;
+    border-radius: 2px;
+}
+
+#loading-progress-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    background: #042146;
+}
+
+#loading-text {
+    margin-top: 1em;
+    text-align: center;
+}
+
+#toast {
+    display: none;
+    position: absolute;
+    top: calc(50% - 0.8em);
+    width: 100%;
+    text-align: center;
+}
+
+#toast.show {
+    display: initial;
+}
+
+#toast.fade-out {
+    transition: opacity 0.3s linear;
+    opacity: 0;
+}
+
+#toast-msg {
+    padding: 0.3em 0.7em;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border-radius: 6px;
+}
