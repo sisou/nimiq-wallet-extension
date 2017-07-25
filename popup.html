@@ -544,7 +544,7 @@ value "popup.html".
             NIMA <span>Nimiq Wallet Manager</span> <span style="color: red; opacity: 1;">BETA</span>
         </h1>
         <nav>
-            <button id="buttonShowContacts" title="Contacts (coming soon)" class="fa fa-address-card" disabled></button>
+            <!-- <button id="buttonShowContacts" title="Contacts (coming soon)" class="fa fa-address-card" disabled></button> -->
             <button id="buttonShowMyWallets" title="My Wallets" class="fa fa-th-large"></button>
             <!-- <button id="buttonShowNotifications" title="Notifications (coming soon)" class="fa fa-exclamation-circle" disabled></button> -->
         </nav>
@@ -558,8 +558,9 @@ value "popup.html".
         <span id="activeWalletBalance" class="wallet-balance icon-nimiq"></span>
         <div id="activeWalletActions">
             <button id="buttonToggleMining" title="Toggle mining" data-hashrate="0">Miner <i class="fa fa-power-off"></i></button>
-            <button id="buttonNewTx" class="button-group-right" style="float: right">Send</button>
-            <button id="buttonCreateCashlink" class="button-group-left" style="float: right" disabled title="(coming soon)">Cashlink</button>
+            <button id="buttonNewTx" style="float: right">Send</button>
+            <!-- <button id="buttonNewTx" class="button-group-right" style="float: right">Send</button> -->
+            <!-- <button id="buttonCreateCashlink" class="button-group-left" style="float: right" disabled title="(coming soon)">Cashlink</button> -->
         </div>
     </section>
     <hr>
@@ -574,7 +575,7 @@ value "popup.html".
 
         <h2>New Transaction</h2>
         <input type="text" id="input-tx-receiver" class="input-large" placeholder="Receiver Account Number">
-        <input type="number" id="input-tx-value" class="input-large" placeholder="0.00"><br>
+        <input type="number" id="input-tx-value" class="input-large" placeholder="0.00" min="0"><br>
         <!-- <input type="text" id="input-tx-message" class="input-large" placeholder="Add a note"><br> -->
         <br>
         <button id="button-send-tx" class="button-large">Send</button>
