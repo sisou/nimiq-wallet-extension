@@ -291,19 +291,20 @@ async function updateStoreSchema() {
     }
 }
 
-function _start() {
+async function _start() {
     if(Nimiq._core) {
         console.error('Nimiq is already running. _stop() first.');
         return false;
     }
 
-    updateStoreSchema();
+    await updateStoreSchema();
 
     store.get('active', function(items) {
         console.log(items);
         var active = items.active;
 
         if(active) {
+            console.log('Loading active wallet', active);
             store.get('wallets', function(items) {
                 var wallets = items.wallets;
                 updateState({numberOfWallets: Object.keys(wallets).length});
@@ -313,6 +314,7 @@ function _start() {
         }
         else {
             // Start basic Nimiq runtime to be able to access Nimiq subclasses
+            console.log('Loading minimal Nimiq instance');
             Nimiq.init($ => { window.$ = $; }, error => { console.error(error); });
         }
     });
