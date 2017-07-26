@@ -164,7 +164,7 @@ function startNimiq(params) {
 
     var options = Object.assign({}, defaults, params);
 
-    Nimiq.init($ => {
+    Nimiq.init(async $ => {
         console.log('Nimiq loaded. Connecting and establishing consensus.');
 
         window.$ = $;
@@ -200,7 +200,9 @@ function startNimiq(params) {
         $.mempool.on('*', () => _mempoolChanged());
         _mempoolChanged();
 
-        $.network.connect();
+        await analyseHistory(store.analysedHeight + 1, $.blockchain.height);
+
+        // $.network.connect();
     }, function(error) {
         updateState({status: 'Not connected'});
         console.error(error);
@@ -230,7 +232,7 @@ var store = chrome.storage.local;
 //             {
 //                 timestamp: <timestamp>,
 //                 height: <height>,
-//                 type: 'blockmined|incoming|outgoing|balancechanged|created',
+//                 type: 'blockmined|incoming|outgoing|historygap|created',
 //                 address: <sender_or_receiver_address, null otherwise>,
 //                 value: <value>
 //             }
@@ -288,6 +290,24 @@ async function updateStoreSchema() {
             });
             // No break at the end to fall through to following updates
         }
+    }
+}
+
+async function analyseBlock(block) {
+    // TODO Check block for events: blockmined, incoming, outgoing
+}
+
+async function analyseHistory(fromHeight, toHeight) {
+    // Make sure that fromHeight is available in our path, otherwise start at lowest available height
+    var actualFromHeight = Math.max(fromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
+
+    // TODO Add event 'historygap' if actualFromHeight is different from given fromHeight
+
+    // Translate actualFromHeight into path index
+    var index = ($.blockchain.path.length - 1) - ($.blockchain.height - actualFromHeight);
+
+    while(index < $.blockchain.length) {
+        await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]));
     }
 }
 
