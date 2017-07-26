@@ -9,7 +9,7 @@ Nimiq._hasNativeClassSupport = async function() {
     };
     $sandbox.contentWindow.postMessage(message, '*');
 
-    return await new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         window.addEventListener('message', function(event) {
             if (event.data.command === message.command) {
                 resolve(event.data.result);
@@ -24,7 +24,7 @@ Nimiq._hasAsyncAwaitSupport = async function() {
     };
     $sandbox.contentWindow.postMessage(message, '*');
 
-    return await new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         window.addEventListener('message', function(event) {
             if (event.data.command === message.command) {
                 resolve(event.data.result);
@@ -39,7 +39,7 @@ Nimiq._hasProperScoping = async function() {
     };
     $sandbox.contentWindow.postMessage(message, '*');
 
-    return await new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         window.addEventListener('message', function(event) {
             if (event.data.command === message.command) {
                 resolve(event.data.result);
@@ -293,7 +293,7 @@ async function importPrivateKey(privKey, name) {
 
     if(!name) name = address.substring(0, 6);
 
-    return await new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         store.get('wallets', function(items) {
             console.log(items);
 
@@ -375,7 +375,7 @@ function switchWallet(address) {
 }
 
 async function updateName(address, name) {
-    return await new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         store.get('wallets', function(items) {
             console.log(items);
 
@@ -406,7 +406,7 @@ async function createNewWallet() {
 }
 
 async function removeWallet(address) {
-    return await new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         store.get('wallets', function(items) {
             console.log(items);
 
