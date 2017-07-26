@@ -56,7 +56,8 @@ var state = {
     activeWallet: {
         name: 'loading...',
         address: '',
-        balance: 'loading...'
+        balance: 'loading...',
+        history: []
     },
     numberOfWallets: 0,
     height: 0,
@@ -213,30 +214,100 @@ chrome.runtime.onMessage.addListener(messageReceived);
 
 var store = chrome.storage.local;
 
+// Storage schema
+// {
+//     version: 2,
+//     active: '<address>',
+//     wallets: {
+//         '<address>': {
+//             name: '<name>',
+//             key: '<privateKey>'
+//         }
+//     },
+//     analysedHeight: 0,
+//     history: {
+//         '<address>': [
+//             {
+//                 timestamp: <timestamp>,
+//                 height: <height>,
+//                 type: 'blockmined|incoming|outgoing|balancechanged|created',
+//                 address: <sender_or_receiver_address, null otherwise>,
+//                 value: <value>
+//             }
+//         ]
+//     }
+// };
+async function updateStoreSchema() {
+    var version = await new Promise(function(resolve, reject) {
+        store.get('version', function(items) {
+            resolve(items.version);
+        });
+    });
+
+    console.log('Storage version:', version);
+
+    switch(version) {
+        case undefined:
+            var schema = {
+                version: 2,
+                active: null,
+                wallets: {},
+                analysedHeight: 0,
+                history: {}
+            };
+
+            await new Promise(function(resolve, reject) {
+                store.set(schema, function() {
+                    if(chrome.runtime.lastError) console.log(runtime.lastError);
+                    else {
+                        console.log("Schema stored");
+                        resolve();
+                    }
+                });
+            });
+            break;
+        case 1: {
+            // Update to version 2
+            console.log('Updating storage to version 2');
+            var wallets = Object.keys(await new Promise(function(resolve, reject) {
+                store.get('wallets', function(items) {
+                    resolve(items.wallets);
+                });
+            }));
+
+            var history = {};
+            wallets.map(function(address) {
+                history[address] = [];
+            });
+
+            await new Promise(function(resolve, reject) {
+                store.set({version: 2, analysedHeight: 0, history: history}, function() {
+                    if(chrome.runtime.lastError) console.log(runtime.lastError);
+                    else resolve();
+                });
+            });
+            // No break at the end to fall through to following updates
+        }
+    }
+}
+
 function _start() {
     if(Nimiq._core) {
         console.error('Nimiq is already running. _stop() first.');
         return false;
     }
 
+    updateStoreSchema();
+
     store.get('active', function(items) {
         console.log(items);
         var active = items.active;
 
-        if(typeof active === 'undefined') {
-            // Storage schema is not yet set
-            writeStoreSchema();
-            _start();
-            return;
-        }
-
         if(active) {
             store.get('wallets', function(items) {
-                console.log(items);
                 var wallets = items.wallets;
                 updateState({numberOfWallets: Object.keys(wallets).length});
                 var privKey = wallets[active].key;
-                console.log("store.wallets." + active, privKey);
                 startNimiq({walletSeed: privKey});
             });
         }
@@ -255,36 +326,6 @@ function _stop() {
     $ = null;
 }
 
-// Storage schema
-// {
-//     version: 1,
-//     active: '<address>',
-//     wallets: {
-//         '<address>': {
-//              name: 'Wallet Nr 1',
-//              key: '<privateKey>'
-//         },
-//         '<address>': {
-//              name: 'Wallet Nr 1',
-//              key: '<privateKey>'
-//         }
-//     }
-// };
-function writeStoreSchema() {
-    // TODO Save-guard against overwriting existing data
-
-    var schema = {
-        version: 1,
-        active: null,
-        wallets: {}
-    };
-
-    store.set(schema, function() {
-        if(chrome.runtime.lastError) console.log(runtime.lastError);
-        else console.log("Schema stored");
-    });
-}
-
 async function importPrivateKey(privKey, name) {
     // TODO Validate privKey format
 
@@ -294,32 +335,22 @@ async function importPrivateKey(privKey, name) {
     if(!name) name = address.substring(0, 6);
 
     return new Promise(function(resolve, reject) {
-        store.get('wallets', function(items) {
+        store.get(['wallets', 'history'], function(items) {
             console.log(items);
 
             var wallets = items.wallets;
-
-            // If this is the first wallet created, activate it
-            // var activate = Object.keys(wallets).length === 0;
+            var history = items.history;
 
             wallets[address] = {
                 name: name,
                 key: privKey
             };
 
-            store.set({wallets: wallets}, function() {
+            history[address] = [];
+
+            store.set({wallets: wallets, history: history}, function() {
                 if(chrome.runtime.lastError) console.log(runtime.lastError);
-                else /*if(activate)
-                    store.set({active: address}, function() {
-                        if(chrome.runtime.lastError) console.log(runtime.lastError);
-                        else {
-                            console.log("Stored and activated", address);
-                            switchWallet(address);
-                            updateState({numberOfWallets: Object.keys(wallets).length});
-                            resolve();
-                        }
-                    });
-                else */{
+                else {
                     console.log("Stored", address);
                     updateState({numberOfWallets: Object.keys(wallets).length});
                     resolve(address);
@@ -407,13 +438,16 @@ async function createNewWallet() {
 
 async function removeWallet(address) {
     return new Promise(function(resolve, reject) {
-        store.get('wallets', function(items) {
+        store.get(['wallets', 'history'], function(items) {
             console.log(items);
 
             var wallets = items.wallets;
-            delete wallets[address];
+            var history = items.history;
 
-            store.set({wallets: wallets}, function() {
+            delete wallets[address];
+            delete history[address];
+
+            store.set({wallets: wallets, history: history}, function() {
                 if(chrome.runtime.lastError) console.log(runtime.lastError);
                 else {
                     console.log("Removed wallet", address);
