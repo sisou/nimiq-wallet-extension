@@ -394,9 +394,9 @@ async function analyseBlock(block, address, triggeredManually) {
 }
 
 async function analyseHistory(expectedFromHeight, toHeight, address) {
-    console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
-
     if(expectedFromHeight > toHeight) return;
+
+    console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
 
     // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
     var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
