@@ -295,6 +295,35 @@ async function updateStoreSchema() {
 
 async function analyseBlock(block) {
     // TODO Check block for events: blockmined, incoming, outgoing
+    var history = await new Promise(function(resolve, reject) {
+        store.get('history', function(items) {
+            resolve(items.history);
+        });
+    });
+
+    var addresses = Object.keys(history);
+
+    // Check transactions
+    if(block.transactionCount > 0) {
+        // TODO
+    }
+
+    // Check minerAddr
+    if(addresses.indexOf(block.minerAddr) > -1) {
+        history[block.minerAddr].unshift({
+            timestamp: block.timestamp,
+            height: block.height,
+            type: 'blockmined',
+            value: Nimiq.Policy.BLOCK_REWARD
+        });
+    }
+
+    await new Promise(function(resolve, reject) {
+        store.set({analysedHeight: block.height}, function() {
+            if(chrome.runtime.lastError) console.error(runtime.lastError);
+            else resolve();
+        });
+    });
 }
 
 async function analyseHistory(expectedFromHeight, toHeight) {
