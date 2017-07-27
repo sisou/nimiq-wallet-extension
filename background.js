@@ -203,7 +203,7 @@ function startNimiq(params) {
 
         await analyseHistory(store.analysedHeight + 1, $.blockchain.height);
 
-        // $.network.connect();
+        $.network.connect();
     }, function(error) {
         updateState({status: 'Not connected'});
         console.error(error);
@@ -295,7 +295,8 @@ async function updateStoreSchema() {
 }
 
 async function analyseBlock(block) {
-    // TODO Check block for events: blockmined, incoming, outgoing
+    console.log('Analysing block', block.height);
+
     var history = await new Promise(function(resolve, reject) {
         store.get('history', function(items) {
             resolve(items.history);
@@ -308,34 +309,46 @@ async function analyseBlock(block) {
     if(block.transactionCount > 0) {
         block.transactions.forEach(async function(tx) {
             if(addresses.indexOf(tx.recipientAddr.toHex()) > -1) {
-                history[tx.recipientAddr.toHex()].unshift({
+                let event = {
                     timestamp: block.timestamp,
                     height: block.height,
                     type: 'incoming',
                     address: (await tx.getSenderAddr()).toHex(),
                     value: tx.value
-                });
+                };
+
+                console.log('Found event:', event);
+
+                history[tx.recipientAddr.toHex()].unshift(event);
             }
             else if(addresses.indexOf((await tx.getSenderAddr()).toHex()) > -1) {
-                history[(await tx.getSenderAddr()).toHex()].unshift({
+                let event = {
                     timestamp: block.timestamp,
                     height: block.height,
                     type: 'outgoing',
                     address: tx.recipientAddr.toHex(),
                     value: tx.value
-                });
+                };
+
+                console.log('Found event:', event);
+
+                history[(await tx.getSenderAddr()).toHex()].unshift(event);
             }
         });
     }
 
     // Check minerAddr
     if(addresses.indexOf(block.minerAddr.toHex()) > -1) {
-        history[block.minerAddr.toHex()].unshift({
+        let event = {
             timestamp: block.timestamp,
             height: block.height,
             type: 'blockmined',
             value: Nimiq.Policy.BLOCK_REWARD
-        });
+        };
+
+        console.log('Found event:', event);
+
+        history[block.minerAddr.toHex()].unshift(event);
     }
 
     await new Promise(function(resolve, reject) {
@@ -361,12 +374,16 @@ async function analyseHistory(expectedFromHeight, toHeight) {
 
         var addresses = Object.keys(history);
 
+        let event = {
+            timestamp: $.blockchain.head.timestamp,
+            height: $.blockchain.height,
+            type: 'historygap'
+        };
+
+        console.log('Found event:', event);
+
         addresses.forEach(function(address) {
-            history[address].unshift({
-                timestamp: $.blockchain.head.timestamp,
-                height: $.blockchain.height,
-                type: 'historygap'
-            });
+            history[address].unshift(event);
         });
 
         await new Promise(function(resolve, reject) {
