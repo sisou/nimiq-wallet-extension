@@ -118,7 +118,7 @@ function _onBalanceChanged(newBalance) {
 
 async function _onHeadChanged(triggeredManually) {
     console.log(`Now at height #${$.blockchain.height}.`);
-    await analyseBlock($.blockchain.head, triggeredManually);
+    await analyseBlock($.blockchain.head, null, triggeredManually);
     updateState({height: $.blockchain.height});
 }
 
@@ -300,7 +300,7 @@ async function updateStoreSchema() {
     }
 }
 
-async function analyseBlock(block, triggeredManually) {
+async function analyseBlock(block, address, triggeredManually) {
     // For performance reasons, only check the stored analysedHeight when analyseBlock is triggered manually
     if(triggeredManually) {
         var analysedHeight = await new Promise(function(resolve, reject) {
@@ -320,7 +320,7 @@ async function analyseBlock(block, triggeredManually) {
         });
     });
 
-    var addresses = Object.keys(history);
+    var addresses = address ? [address] : Object.keys(history);
 
     var eventFound = false;
 
@@ -378,19 +378,14 @@ async function analyseBlock(block, triggeredManually) {
         history[block.minerAddr.toHex()].unshift(event);
     }
 
-    if(eventFound) {
-        console.log(history);
+    var storeUpdate = {};
 
+    if(!address)   storeUpdate.analysedHeight = block.height;
+    if(eventFound) storeUpdate.history        = history;
+
+    if(Object.keys(storeUpdate).length > 0) {
         await new Promise(function(resolve, reject) {
-            store.set({history: history, analysedHeight: block.height}, function() {
-                if(chrome.runtime.lastError) console.error(runtime.lastError);
-                else resolve();
-            });
-        });
-    }
-    else {
-        await new Promise(function(resolve, reject) {
-            store.set({analysedHeight: block.height}, function() {
+            store.set(storeUpdate, function() {
                 if(chrome.runtime.lastError) console.error(runtime.lastError);
                 else resolve();
             });
@@ -398,7 +393,7 @@ async function analyseBlock(block, triggeredManually) {
     }
 }
 
-async function analyseHistory(expectedFromHeight, toHeight) {
+async function analyseHistory(expectedFromHeight, toHeight, address) {
     console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
 
     if(expectedFromHeight > toHeight) return;
@@ -413,7 +408,7 @@ async function analyseHistory(expectedFromHeight, toHeight) {
             });
         });
 
-        var addresses = Object.keys(history);
+        var addresses = address ? [address] : Object.keys(history);
 
         var block = await $.blockchain.getBlock($.blockchain.path[0]);
 
@@ -441,7 +436,7 @@ async function analyseHistory(expectedFromHeight, toHeight) {
     var index = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight);
 
     while(index < $.blockchain.path.length) {
-        await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]));
+        await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]), address);
         index++;
     }
 }
