@@ -260,7 +260,7 @@ async function updateStoreSchema() {
 
             await new Promise(function(resolve, reject) {
                 store.set(schema, function() {
-                    if(chrome.runtime.lastError) console.log(runtime.lastError);
+                    if(chrome.runtime.lastError) console.error(runtime.lastError);
                     else {
                         console.log("Schema stored");
                         resolve();
@@ -284,7 +284,7 @@ async function updateStoreSchema() {
 
             await new Promise(function(resolve, reject) {
                 store.set({version: 2, analysedHeight: 0, history: history}, function() {
-                    if(chrome.runtime.lastError) console.log(runtime.lastError);
+                    if(chrome.runtime.lastError) console.error(runtime.lastError);
                     else resolve();
                 });
             });
@@ -371,7 +371,7 @@ async function importPrivateKey(privKey, name) {
             history[address] = [];
 
             store.set({wallets: wallets, history: history}, function() {
-                if(chrome.runtime.lastError) console.log(runtime.lastError);
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
                 else {
                     console.log("Stored", address);
                     updateState({numberOfWallets: Object.keys(wallets).length});
@@ -406,7 +406,7 @@ async function listWallets() {
 
 function switchWallet(address) {
     store.set({active: address}, function() {
-        if(chrome.runtime.lastError) console.log(runtime.lastError);
+        if(chrome.runtime.lastError) console.error(runtime.lastError);
         else {
             console.log("Activated", address);
             store.get('wallets', function(items) {
@@ -436,7 +436,7 @@ async function updateName(address, name) {
             wallets[address].name = name;
 
             store.set({wallets: wallets}, function() {
-                if(chrome.runtime.lastError) console.log(runtime.lastError);
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
                 else {
                     console.log("Stored name", name, address);
                     if(address === state.activeWallet.address) {
@@ -470,7 +470,7 @@ async function removeWallet(address) {
             delete history[address];
 
             store.set({wallets: wallets, history: history}, function() {
-                if(chrome.runtime.lastError) console.log(runtime.lastError);
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
                 else {
                     console.log("Removed wallet", address);
                     updateState({numberOfWallets: Object.keys(wallets).length});
