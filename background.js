@@ -301,7 +301,30 @@ async function analyseHistory(expectedFromHeight, toHeight) {
     // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
     var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
 
-    // TODO Add event 'historygap' if fromHeight is different from expectedFromHeight
+    if(expectedFromHeight < fromHeight) {
+        var history = await new Promise(function(resolve, reject) {
+            store.get('history', function(items) {
+                resolve(items.history);
+            });
+        });
+
+        var addresses = Object.keys(history);
+
+        addresses.forEach(function(address) {
+            history[address].unshift({
+                timestamp: $.blockchain.head.timestamp,
+                height: $.blockchain.height,
+                type: 'historygap'
+            });
+        });
+
+        await new Promise(function(resolve, reject) {
+            store.set({history: history}, function() {
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
+                else resolve();
+            });
+        });
+    }
 
     // Translate fromHeight into path index
     var index = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight);
