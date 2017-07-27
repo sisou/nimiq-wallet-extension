@@ -415,9 +415,11 @@ async function analyseHistory(expectedFromHeight, toHeight) {
 
         var addresses = Object.keys(history);
 
+        var block = await $.blockchain.getBlock($.blockchain.path[0]);
+
         let event = {
-            timestamp: $.blockchain.head.timestamp,
-            height: $.blockchain.height,
+            timestamp: block.timestamp,
+            height: block.height,
             type: 'historygap'
         };
 
