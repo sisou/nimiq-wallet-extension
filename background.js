@@ -491,13 +491,12 @@ function _stop() {
     $ = null;
 }
 
-async function importPrivateKey(privKey, name) {
+async function importPrivateKey(privKey) {
     // TODO Validate privKey format
 
     var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
-        address = address.toHex();
-
-    if(!name) name = address.substring(0, 6);
+        address = address.toHex(),
+        name    = address.substring(0, 6);
 
     try {
         await new Promise(function(resolve, reject) {
