@@ -418,9 +418,8 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
             type: 'historygap'
         };
 
-        console.log('Found event for all wallets:', event);
-
         addresses.forEach(function(address) {
+            console.log('Found event for', address, event);
             history[address].unshift(event);
         });
 
@@ -485,28 +484,39 @@ async function importPrivateKey(privKey, name) {
 
     if(!name) name = address.substring(0, 6);
 
-    return new Promise(function(resolve, reject) {
-        store.get(['wallets', 'history'], function(items) {
-            var wallets = items.wallets;
-            var history = items.history;
+    try {
+        await new Promise(function(resolve, reject) {
+            store.get(['wallets', 'history'], function(items) {
+                var wallets = items.wallets;
+                var history = items.history;
 
-            wallets[address] = {
-                name: name,
-                key: privKey
-            };
-
-            history[address] = [];
-
-            store.set({wallets: wallets, history: history}, function() {
-                if(chrome.runtime.lastError) console.error(runtime.lastError);
-                else {
-                    console.log("Stored", address);
-                    updateState({numberOfWallets: Object.keys(wallets).length});
-                    resolve(address);
+                if(wallets[address]) {
+                    reject(new Error('Wallet already exists'));
+                    return;
                 }
+
+                wallets[address] = {
+                    name: name,
+                    key: privKey
+                };
+
+                history[address] = [];
+
+                store.set({wallets: wallets, history: history}, function() {
+                    if(chrome.runtime.lastError) console.error(runtime.lastError);
+                    else {
+                        console.log("Stored", address);
+                        updateState({numberOfWallets: Object.keys(wallets).length});
+                        resolve(address);
+                    }
+                });
             });
         });
-    });
+    }
+    catch(e) {
+        console.error(e);
+        return;
+    }
 }
 
 async function listWallets() {
