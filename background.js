@@ -116,9 +116,9 @@ function _onBalanceChanged(newBalance) {
     }});
 }
 
-async function _onHeadChanged() {
+async function _onHeadChanged(triggeredManually) {
     console.log(`Now at height #${$.blockchain.height}.`);
-    await analyseBlock($.blockchain.head);
+    await analyseBlock($.blockchain.head, triggeredManually);
     updateState({height: $.blockchain.height});
 }
 
@@ -190,7 +190,7 @@ function startNimiq(params) {
         $.consensus.on('lost', () => _onConsensusLost());
 
         $.blockchain.on('head-changed', () => _onHeadChanged());
-        _onHeadChanged();
+        _onHeadChanged(true);
 
         $.miner.on('hashrate-changed', () => {
             updateState({hashrate: $.miner.hashrate});
@@ -300,7 +300,18 @@ async function updateStoreSchema() {
     }
 }
 
-async function analyseBlock(block) {
+async function analyseBlock(block, triggeredManually) {
+    // For performance reasons, only check the stored analysedHeight when analyseBlock is triggered manually
+    if(triggeredManually) {
+        var analysedHeight = await new Promise(function(resolve, reject) {
+            store.get('analysedHeight', function(items) {
+                resolve(items.analysedHeight);
+            });
+        });
+
+        if(analysedHeight >= block.height) return;
+    }
+
     console.log('Analysing block', block.height);
 
     var history = await new Promise(function(resolve, reject) {
