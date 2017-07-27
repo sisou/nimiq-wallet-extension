@@ -189,6 +189,14 @@ function startNimiq(params) {
         $.consensus.on('established', () => _onConsensusEstablished());
         $.consensus.on('lost', () => _onConsensusLost());
 
+        var analysedHeight = await new Promise(function(resolve, reject) {
+            store.get('analysedHeight', function(items) {
+                resolve(items.analysedHeight);
+            });
+        });
+
+        await analyseHistory(analysedHeight + 1, $.blockchain.height);
+
         $.blockchain.on('head-changed', () => _onHeadChanged());
         _onHeadChanged(true);
 
@@ -200,14 +208,6 @@ function startNimiq(params) {
 
         $.mempool.on('*', () => _mempoolChanged());
         _mempoolChanged();
-
-        var analysedHeight = await new Promise(function(resolve, reject) {
-            store.get('analysedHeight', function(items) {
-                resolve(items.analysedHeight);
-            });
-        });
-
-        await analyseHistory(analysedHeight + 1, $.blockchain.height);
 
         $.network.connect();
     }, function(error) {
@@ -322,10 +322,13 @@ async function analyseBlock(block, triggeredManually) {
 
     var addresses = Object.keys(history);
 
+    var eventFound = false;
+
     // Check transactions
     if(block.transactionCount > 0) {
-        block.transactions.forEach(async function(tx) {
-            var sender   = (await tx.getSenderAddr()).toHex(),
+        for(var i = 0; i < block.transactions.length; i++) { // Cannot use .forEach here, as it is not possible to wait for anonymous functions
+            var tx       = block.transactions[i],
+                sender   = (await tx.getSenderAddr()).toHex(),
                 receiver = tx.recipientAddr.toHex();
 
             if(addresses.indexOf(receiver) > -1) {
@@ -338,6 +341,7 @@ async function analyseBlock(block, triggeredManually) {
                 };
 
                 console.log('Found event for', receiver, event);
+                eventFound = true;
 
                 history[receiver].unshift(event);
             }
@@ -352,10 +356,11 @@ async function analyseBlock(block, triggeredManually) {
                 };
 
                 console.log('Found event for', sender, event);
+                eventFound = true;
 
                 history[sender].unshift(event);
             }
-        });
+        }
     }
 
     // Check minerAddr
@@ -368,19 +373,34 @@ async function analyseBlock(block, triggeredManually) {
         };
 
         console.log('Found event for', block.minerAddr.toHex(), event);
+        eventFound = true;
 
         history[block.minerAddr.toHex()].unshift(event);
     }
 
-    await new Promise(function(resolve, reject) {
-        store.set({history: history, analysedHeight: block.height}, function() {
-            if(chrome.runtime.lastError) console.error(runtime.lastError);
-            else resolve();
+    if(eventFound) {
+        console.log(history);
+
+        await new Promise(function(resolve, reject) {
+            store.set({history: history, analysedHeight: block.height}, function() {
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
+                else resolve();
+            });
         });
-    });
+    }
+    else {
+        await new Promise(function(resolve, reject) {
+            store.set({analysedHeight: block.height}, function() {
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
+                else resolve();
+            });
+        });
+    }
 }
 
 async function analyseHistory(expectedFromHeight, toHeight) {
+    console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
+
     if(expectedFromHeight > toHeight) return;
 
     // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
@@ -418,8 +438,9 @@ async function analyseHistory(expectedFromHeight, toHeight) {
     // Translate fromHeight into path index
     var index = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight);
 
-    while(index < $.blockchain.length) {
+    while(index < $.blockchain.path.length) {
         await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]));
+        index++;
     }
 }
 
