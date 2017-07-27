@@ -450,7 +450,6 @@ async function _start() {
     await updateStoreSchema();
 
     store.get('active', function(items) {
-        console.log(items);
         var active = items.active;
 
         if(active) {
@@ -488,8 +487,6 @@ async function importPrivateKey(privKey, name) {
 
     return new Promise(function(resolve, reject) {
         store.get(['wallets', 'history'], function(items) {
-            console.log(items);
-
             var wallets = items.wallets;
             var history = items.history;
 
@@ -540,8 +537,6 @@ function switchWallet(address) {
         else {
             console.log("Activated", address);
             store.get('wallets', function(items) {
-                console.log(items);
-
                 var wallets = items.wallets;
 
                 updateState({activeWallet: {
@@ -560,8 +555,6 @@ function switchWallet(address) {
 async function updateName(address, name) {
     return new Promise(function(resolve, reject) {
         store.get('wallets', function(items) {
-            console.log(items);
-
             var wallets = items.wallets;
             wallets[address].name = name;
 
@@ -591,8 +584,6 @@ async function createNewWallet() {
 async function removeWallet(address) {
     return new Promise(function(resolve, reject) {
         store.get(['wallets', 'history'], function(items) {
-            console.log(items);
-
             var wallets = items.wallets;
             var history = items.history;
 
