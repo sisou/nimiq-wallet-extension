@@ -533,13 +533,15 @@ async function importPrivateKey(privKey, name) {
         return;
     }
 
-    var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
+    if(state.activeWallet.address) { // Only analyse history if this is not the first imported wallet
+        var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
 
-    if(balance.value > 0 || balance.nonce > 0) {
-        state.analysingHistory = true;
-        analyseHistory(0, $.blockchain.height, address);
+        if(balance.value > 0 || balance.nonce > 0) {
+            state.analysingHistory = true;
+            analyseHistory(0, $.blockchain.height, address);
+        }
+        else console.log('Imported wallet has balance=0 and nonce=0. Not analysing history');
     }
-    else console.log('Imported wallet has balance=0 and nonce=0. Not analysing history');
 }
 
 async function listWallets() {
