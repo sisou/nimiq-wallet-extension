@@ -326,7 +326,7 @@ async function analyseBlock(block) {
                     value: tx.value
                 };
 
-                console.log('Found event:', event);
+                console.log('Found event for', receiver, event);
 
                 history[receiver].unshift(event);
             }
@@ -340,7 +340,7 @@ async function analyseBlock(block) {
                     value: tx.value
                 };
 
-                console.log('Found event:', event);
+                console.log('Found event for', sender, event);
 
                 history[sender].unshift(event);
             }
@@ -356,7 +356,7 @@ async function analyseBlock(block) {
             value: Nimiq.Policy.BLOCK_REWARD
         };
 
-        console.log('Found event:', event);
+        console.log('Found event for', block.minerAddr.toHex(), event);
 
         history[block.minerAddr.toHex()].unshift(event);
     }
@@ -390,7 +390,7 @@ async function analyseHistory(expectedFromHeight, toHeight) {
             type: 'historygap'
         };
 
-        console.log('Found event:', event);
+        console.log('Found event for all wallets:', event);
 
         addresses.forEach(function(address) {
             history[address].unshift(event);
