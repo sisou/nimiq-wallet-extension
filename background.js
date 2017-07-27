@@ -67,7 +67,9 @@ var state = {
     mining: false,
     hashrate: 0,
     outgoingTx: [],
-    incomingTx: []
+    incomingTx: [],
+    analysingHistory: false,
+    postponedBlocks: []
 };
 
 function updateState(update) {
@@ -312,6 +314,13 @@ async function analyseBlock(block, address, triggeredManually) {
         if(analysedHeight >= block.height) return;
     }
 
+    if(state.analysingHistory && !address) {
+        // Postpone general analysis of new blocks until specific wallet history analysis is finished
+        state.postponedBlocks.push(block);
+        console.log('Postponing analysis of block', block.height);
+        return;
+    }
+
     console.log('Analysing block', block.height);
 
     var history = await new Promise(function(resolve, reject) {
@@ -431,13 +440,19 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         });
     }
 
-    // Translate fromHeight into path index
-    var index = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight);
+    // Translate heights into path indices
+    var index   = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight),
+        toIndex = ($.blockchain.path.length - 1) - ($.blockchain.height - toHeight);
 
-    while(index < $.blockchain.path.length) {
+    while(index <= toIndex) {
         await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]), address);
         index++;
     }
+
+    state.analysingHistory = false;
+
+    // Process any block analysis that was postponed during the run
+    while(block = state.postponedBlocks.shift()) await analyseBlock(block);
 }
 
 async function _start() {
@@ -517,6 +532,14 @@ async function importPrivateKey(privKey, name) {
         console.error(e);
         return;
     }
+
+    var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
+
+    if(balance.value > 0 || balance.nonce > 0) {
+        state.analysingHistory = true;
+        analyseHistory(0, $.blockchain.height, address);
+    }
+    else console.log('Imported wallet has balance=0 and nonce=0. Not analysing history');
 }
 
 async function listWallets() {
