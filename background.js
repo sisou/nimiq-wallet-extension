@@ -308,31 +308,35 @@ async function analyseBlock(block) {
     // Check transactions
     if(block.transactionCount > 0) {
         block.transactions.forEach(async function(tx) {
-            if(addresses.indexOf(tx.recipientAddr.toHex()) > -1) {
+            var sender   = (await tx.getSenderAddr()).toHex(),
+                receiver = tx.recipientAddr.toHex();
+
+            if(addresses.indexOf(receiver) > -1) {
                 let event = {
                     timestamp: block.timestamp,
                     height: block.height,
                     type: 'incoming',
-                    address: (await tx.getSenderAddr()).toHex(),
+                    address: sender,
                     value: tx.value
                 };
 
                 console.log('Found event:', event);
 
-                history[tx.recipientAddr.toHex()].unshift(event);
+                history[receiver].unshift(event);
             }
-            else if(addresses.indexOf((await tx.getSenderAddr()).toHex()) > -1) {
+
+            if(addresses.indexOf(sender) > -1) {
                 let event = {
                     timestamp: block.timestamp,
                     height: block.height,
                     type: 'outgoing',
-                    address: tx.recipientAddr.toHex(),
+                    address: receiver,
                     value: tx.value
                 };
 
                 console.log('Found event:', event);
 
-                history[(await tx.getSenderAddr()).toHex()].unshift(event);
+                history[sender].unshift(event);
             }
         });
     }
