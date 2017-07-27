@@ -455,6 +455,14 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
     while(block = state.postponedBlocks.shift()) await analyseBlock(block);
 }
 
+function getHistory(address) {
+    return new Promise(function(resolve, reject) {
+        store.get('history', function(items) {
+            resolve(items.history[address]);
+        });
+    });
+}
+
 async function _start() {
     if(Nimiq._core) {
         console.error('Nimiq is already running. _stop() first.');

@@ -6,7 +6,7 @@ var $address          = document.getElementById('activeWalletAddress'),
     $identicon        = document.getElementById('activeWalletIdenticon'),
     $balance          = document.getElementById('activeWalletBalance'),
     $newTx            = document.getElementById('new-tx'),
-    $txsList          = document.getElementById('txs-list'),
+    $historyList      = document.getElementById('history-list'),
     $statusIndicator  = document.getElementById('statusIndicator'),
     $status           = document.getElementById('status'),
     $height           = document.getElementById('height'),
@@ -207,7 +207,7 @@ function renderTxs(outgoingTx, incomingTx) {
 
     if(html !== '') html = html + '<hr>';
 
-    $txsList.innerHTML = html;
+    $historyList.innerHTML = html;
 }
 renderTxs(state.outgoingTx, state.incomingTx);
 
