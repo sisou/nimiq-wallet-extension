@@ -297,14 +297,14 @@ async function analyseBlock(block) {
     // TODO Check block for events: blockmined, incoming, outgoing
 }
 
-async function analyseHistory(fromHeight, toHeight) {
-    // Make sure that fromHeight is available in our path, otherwise start at lowest available height
-    var actualFromHeight = Math.max(fromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
+async function analyseHistory(expectedFromHeight, toHeight) {
+    // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
+    var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
 
-    // TODO Add event 'historygap' if actualFromHeight is different from given fromHeight
+    // TODO Add event 'historygap' if fromHeight is different from expectedFromHeight
 
-    // Translate actualFromHeight into path index
-    var index = ($.blockchain.path.length - 1) - ($.blockchain.height - actualFromHeight);
+    // Translate fromHeight into path index
+    var index = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight);
 
     while(index < $.blockchain.length) {
         await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]));
