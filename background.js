@@ -201,7 +201,13 @@ function startNimiq(params) {
         $.mempool.on('*', () => _mempoolChanged());
         _mempoolChanged();
 
-        await analyseHistory(store.analysedHeight + 1, $.blockchain.height);
+        var analysedHeight = await new Promise(function(resolve, reject) {
+            store.get('analysedHeight', function(items) {
+                resolve(items.analysedHeight);
+            });
+        });
+
+        await analyseHistory(analysedHeight + 1, $.blockchain.height);
 
         $.network.connect();
     }, function(error) {
