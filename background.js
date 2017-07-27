@@ -116,8 +116,9 @@ function _onBalanceChanged(newBalance) {
     }});
 }
 
-function _onHeadChanged() {
+async function _onHeadChanged() {
     console.log(`Now at height #${$.blockchain.height}.`);
+    await analyseBlock($.blockchain.head);
     updateState({height: $.blockchain.height});
 }
 
@@ -305,12 +306,31 @@ async function analyseBlock(block) {
 
     // Check transactions
     if(block.transactionCount > 0) {
-        // TODO
+        block.transactions.forEach(async function(tx) {
+            if(addresses.indexOf(tx.recipientAddr.toHex()) > -1) {
+                history[tx.recipientAddr.toHex()].unshift({
+                    timestamp: block.timestamp,
+                    height: block.height,
+                    type: 'incoming',
+                    address: (await tx.getSenderAddr()).toHex(),
+                    value: tx.value
+                });
+            }
+            else if(addresses.indexOf((await tx.getSenderAddr()).toHex()) > -1) {
+                history[(await tx.getSenderAddr()).toHex()].unshift({
+                    timestamp: block.timestamp,
+                    height: block.height,
+                    type: 'outgoing',
+                    address: tx.recipientAddr.toHex(),
+                    value: tx.value
+                });
+            }
+        });
     }
 
     // Check minerAddr
-    if(addresses.indexOf(block.minerAddr) > -1) {
-        history[block.minerAddr].unshift({
+    if(addresses.indexOf(block.minerAddr.toHex()) > -1) {
+        history[block.minerAddr.toHex()].unshift({
             timestamp: block.timestamp,
             height: block.height,
             type: 'blockmined',
@@ -319,7 +339,7 @@ async function analyseBlock(block) {
     }
 
     await new Promise(function(resolve, reject) {
-        store.set({analysedHeight: block.height}, function() {
+        store.set({history: history, analysedHeight: block.height}, function() {
             if(chrome.runtime.lastError) console.error(runtime.lastError);
             else resolve();
         });
@@ -327,6 +347,8 @@ async function analyseBlock(block) {
 }
 
 async function analyseHistory(expectedFromHeight, toHeight) {
+    if(expectedFromHeight > toHeight) return;
+
     // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
     var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
 
