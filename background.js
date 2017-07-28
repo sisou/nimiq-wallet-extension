@@ -233,7 +233,7 @@ var store = chrome.storage.local;
 //             {
 //                 timestamp: <timestamp>,
 //                 height: <height>,
-//                 type: 'blockmined|incoming|outgoing|historygap|created',
+//                 type: 'blockmined|received|sent|historygap|created',
 //                 address: <sender_or_receiver_address, null otherwise>,
 //                 value: <value>
 //             }
@@ -336,9 +336,9 @@ async function analyseBlock(block, address, triggeredManually) {
                 let event = {
                     timestamp: block.timestamp,
                     height: block.height,
-                    type: 'incoming',
+                    type: 'received',
                     address: sender,
-                    value: tx.value
+                    value: Nimiq.Policy.satoshisToCoins(tx.value)
                 };
 
                 console.log('Found event for', receiver, event);
@@ -351,9 +351,9 @@ async function analyseBlock(block, address, triggeredManually) {
                 let event = {
                     timestamp: block.timestamp,
                     height: block.height,
-                    type: 'outgoing',
+                    type: 'sent',
                     address: receiver,
-                    value: tx.value
+                    value: Nimiq.Policy.satoshisToCoins(tx.value)
                 };
 
                 console.log('Found event for', sender, event);
