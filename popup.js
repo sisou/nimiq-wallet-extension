@@ -249,6 +249,8 @@ function renderHistory(history) {
 }
 updateHistory();
 
+bgPage.setUnreadEventsCount();
+
 function handleStatus(status) {
     if(state.restarting && status === 'Consensus lost')
         state.restarting = false;

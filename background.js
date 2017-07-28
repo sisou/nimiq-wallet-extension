@@ -381,8 +381,12 @@ async function analyseBlock(block, address, triggeredManually) {
 
     var storeUpdate = {};
 
-    if(!address)   storeUpdate.analysedHeight = block.height;
-    if(eventFound) storeUpdate.history        = history;
+    if(!address) storeUpdate.analysedHeight = block.height;
+
+    if(eventFound) {
+        storeUpdate.history = history;
+        setUnreadEventsCount('!');
+    }
 
     if(Object.keys(storeUpdate).length > 0) {
         await new Promise(function(resolve, reject) {
@@ -430,6 +434,8 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
                 else resolve();
             });
         });
+
+        setUnreadEventsCount('!');
     }
 
     // Translate heights into path indices
@@ -454,6 +460,17 @@ function getHistory(address, full) {
             else     resolve(items.history[address].slice(0, 10));
         });
     });
+}
+
+function popupIsOpen() {
+    return !!chrome.extension.getViews({ type: "popup" }).length;
+}
+
+chrome.browserAction.setBadgeBackgroundColor({color: 'firebrick'});
+function setUnreadEventsCount(count) {
+    count = count || '';
+
+    if(!popupIsOpen()) chrome.browserAction.setBadgeText({text: count.toString()});
 }
 
 async function _start() {
