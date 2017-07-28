@@ -245,7 +245,7 @@ header nav button:hover {
 }
 
 #history-wrapper {
-    height: 227px;
+    height: 236px;
 }
 
 #wallet-list::-webkit-scrollbar,
@@ -273,6 +273,11 @@ header nav button:hover {
     padding: 1em;
     border-radius: 4px;
     margin-bottom: 0.5em;
+}
+
+#pending-history-list .history-list-item {
+    background: none;
+    border: 1px solid #F0F0F0;
 }
 
 .wallet-list-item:last-child,
