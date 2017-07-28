@@ -233,7 +233,7 @@ function renderHistory(history) {
                 `; break;
             case 'historygap':
                 listItem.innerHTML = `
-                    <span class="event-type">No history available</span><br>
+                    <span class="event-type">No data available</span><br>
                     before <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
                 `; break;
         }
