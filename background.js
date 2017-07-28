@@ -56,7 +56,8 @@ var state = {
     activeWallet: {
         name: 'loading...',
         address: '',
-        balance: 'loading...'
+        balance: 'loading...',
+        history: []
     },
     numberOfWallets: 0,
     height: 0,
@@ -65,8 +66,9 @@ var state = {
     status: 'Not connected',
     mining: false,
     hashrate: 0,
-    outgoingTx: [],
-    incomingTx: []
+    pendingTxs: [],
+    analysingHistory: false,
+    postponedBlocks: []
 };
 
 function updateState(update) {
@@ -115,8 +117,9 @@ function _onBalanceChanged(newBalance) {
     }});
 }
 
-function _onHeadChanged() {
+async function _onHeadChanged(triggeredManually) {
     console.log(`Now at height #${$.blockchain.height}.`);
+    await analyseBlock($.blockchain.head, null, triggeredManually);
     updateState({height: $.blockchain.height});
 }
 
@@ -128,32 +131,25 @@ function _onPeersChanged() {
 async function _mempoolChanged() {
     var txs = $.mempool.getTransactions();
 
-    var outgoing = [],
-        incoming = [];
+    var pendingTxs = [];
 
     for (var tx of txs) {
-        var senderAddr = await tx.getSenderAddr();
+        var sender   = (await tx.getSenderAddr()).toHex(),
+            receiver = tx.recipientAddr.toHex();
 
-        var value = Nimiq.Policy.satoshisToCoins(tx.value);
-        var fee = Nimiq.Policy.satoshisToCoins(tx.fee);
-
-        var txObj = {
-            sender: senderAddr.toHex(),
-            receiver: tx.recipientAddr.toHex(),
-            value: value,
-            message: null, // TODO Fill when available
-            fee: fee,
-            nonce: tx.nonce
-        };
-
-        if(txObj.sender === state.activeWallet.address)
-            outgoing.push(txObj);
-        if(txObj.receiver === state.activeWallet.address)
-            incoming.push(txObj);
+        if([sender, receiver].indexOf(state.activeWallet.address) > -1) {
+            pendingTxs.push({
+                address : sender === state.activeWallet.address ? receiver : sender,
+                value: Nimiq.Policy.satoshisToCoins(tx.value),
+                type: sender === state.activeWallet.address ? 'sending' : 'receiving'
+                // message: null, // TODO Fill when available
+                // fee: Nimiq.Policy.satoshisToCoins(tx.fee),
+                // nonce: tx.nonce
+            });
+        }
     }
 
-    updateState({outgoingTx: outgoing});
-    updateState({incomingTx: incoming});
+    updateState({pendingTxs: pendingTxs});
 }
 
 function startNimiq(params) {
@@ -163,7 +159,7 @@ function startNimiq(params) {
 
     var options = Object.assign({}, defaults, params);
 
-    Nimiq.init($ => {
+    Nimiq.init(async $ => {
         console.log('Nimiq loaded. Connecting and establishing consensus.');
 
         window.$ = $;
@@ -187,8 +183,16 @@ function startNimiq(params) {
         $.consensus.on('established', () => _onConsensusEstablished());
         $.consensus.on('lost', () => _onConsensusLost());
 
+        var analysedHeight = await new Promise(function(resolve, reject) {
+            store.get('analysedHeight', function(items) {
+                resolve(items.analysedHeight);
+            });
+        });
+
+        await analyseHistory(analysedHeight + 1, $.blockchain.height);
+
         $.blockchain.on('head-changed', () => _onHeadChanged());
-        _onHeadChanged();
+        _onHeadChanged(true);
 
         $.miner.on('hashrate-changed', () => {
             updateState({hashrate: $.miner.hashrate});
@@ -213,35 +217,268 @@ chrome.runtime.onMessage.addListener(messageReceived);
 
 var store = chrome.storage.local;
 
-function _start() {
+// Storage schema
+// {
+//     version: 2,
+//     active: '<address>',
+//     wallets: {
+//         '<address>': {
+//             name: '<name>',
+//             key: '<privateKey>'
+//         }
+//     },
+//     analysedHeight: 0,
+//     history: {
+//         '<address>': [
+//             {
+//                 timestamp: <timestamp>,
+//                 height: <height>,
+//                 type: 'blockmined|received|sent|historygap|created',
+//                 address: <sender_or_receiver_address, null otherwise>,
+//                 value: <value>
+//             }
+//         ]
+//     }
+// };
+async function updateStoreSchema() {
+    var version = await new Promise(function(resolve, reject) {
+        store.get('version', function(items) {
+            resolve(items.version);
+        });
+    });
+
+    console.log('Storage version:', version);
+
+    switch(version) {
+        case undefined:
+            var schema = {
+                version: 2,
+                active: null,
+                wallets: {},
+                analysedHeight: 0,
+                history: {}
+            };
+
+            await new Promise(function(resolve, reject) {
+                store.set(schema, function() {
+                    if(chrome.runtime.lastError) console.error(runtime.lastError);
+                    else {
+                        console.log("Schema stored");
+                        resolve();
+                    }
+                });
+            });
+            break;
+        case 1: {
+            // Update to version 2
+            console.log('Updating storage to version 2');
+            var wallets = Object.keys(await new Promise(function(resolve, reject) {
+                store.get('wallets', function(items) {
+                    resolve(items.wallets);
+                });
+            }));
+
+            var history = {};
+            wallets.map(function(address) {
+                history[address] = [];
+            });
+
+            await new Promise(function(resolve, reject) {
+                store.set({version: 2, analysedHeight: 0, history: history}, function() {
+                    if(chrome.runtime.lastError) console.error(runtime.lastError);
+                    else resolve();
+                });
+            });
+            // No break at the end to fall through to following updates
+        }
+    }
+}
+
+async function analyseBlock(block, address, triggeredManually) {
+    // For performance reasons, only check the stored analysedHeight when analyseBlock is triggered manually
+    if(triggeredManually) {
+        var analysedHeight = await new Promise(function(resolve, reject) {
+            store.get('analysedHeight', function(items) {
+                resolve(items.analysedHeight);
+            });
+        });
+
+        if(analysedHeight >= block.height) return;
+    }
+
+    if(state.analysingHistory && !address) {
+        // Postpone general analysis of new blocks until specific wallet history analysis is finished
+        state.postponedBlocks.push(block);
+        console.log('Postponing analysis of block', block.height);
+        return;
+    }
+
+    console.log('Analysing block', block.height);
+
+    var history = await new Promise(function(resolve, reject) {
+        store.get('history', function(items) {
+            resolve(items.history);
+        });
+    });
+
+    var addresses = address ? [address] : Object.keys(history);
+
+    var eventFound = false;
+
+    // Check transactions
+    if(block.transactionCount > 0) {
+        for(var i = 0; i < block.transactions.length; i++) { // Cannot use .forEach here, as it is not possible to wait for anonymous functions
+            var tx       = block.transactions[i],
+                sender   = (await tx.getSenderAddr()).toHex(),
+                receiver = tx.recipientAddr.toHex();
+
+            if(addresses.indexOf(receiver) > -1) {
+                let event = {
+                    timestamp: block.timestamp,
+                    height: block.height,
+                    type: 'received',
+                    address: sender,
+                    value: Nimiq.Policy.satoshisToCoins(tx.value)
+                };
+
+                console.log('Found event for', receiver, event);
+                eventFound = true;
+
+                history[receiver].unshift(event);
+            }
+
+            if(addresses.indexOf(sender) > -1) {
+                let event = {
+                    timestamp: block.timestamp,
+                    height: block.height,
+                    type: 'sent',
+                    address: receiver,
+                    value: Nimiq.Policy.satoshisToCoins(tx.value)
+                };
+
+                console.log('Found event for', sender, event);
+                eventFound = true;
+
+                history[sender].unshift(event);
+            }
+        }
+    }
+
+    // Check minerAddr
+    if(addresses.indexOf(block.minerAddr.toHex()) > -1) {
+        let event = {
+            timestamp: block.timestamp,
+            height: block.height,
+            type: 'blockmined',
+            value: Nimiq.Policy.BLOCK_REWARD
+        };
+
+        console.log('Found event for', block.minerAddr.toHex(), event);
+        eventFound = true;
+
+        history[block.minerAddr.toHex()].unshift(event);
+    }
+
+    var storeUpdate = {};
+
+    if(!address)   storeUpdate.analysedHeight = block.height;
+    if(eventFound) storeUpdate.history        = history;
+
+    if(Object.keys(storeUpdate).length > 0) {
+        await new Promise(function(resolve, reject) {
+            store.set(storeUpdate, function() {
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
+                else resolve();
+            });
+        });
+    }
+}
+
+async function analyseHistory(expectedFromHeight, toHeight, address) {
+    if(expectedFromHeight > toHeight) return;
+
+    console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
+
+    // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
+    var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
+
+    if(expectedFromHeight < fromHeight) {
+        var history = await new Promise(function(resolve, reject) {
+            store.get('history', function(items) {
+                resolve(items.history);
+            });
+        });
+
+        var addresses = address ? [address] : Object.keys(history);
+
+        var block = await $.blockchain.getBlock($.blockchain.path[0]);
+
+        let event = {
+            timestamp: block.timestamp,
+            height: block.height,
+            type: 'historygap'
+        };
+
+        addresses.forEach(function(address) {
+            console.log('Found event for', address, event);
+            history[address].unshift(event);
+        });
+
+        await new Promise(function(resolve, reject) {
+            store.set({history: history}, function() {
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
+                else resolve();
+            });
+        });
+    }
+
+    // Translate heights into path indices
+    var index   = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight),
+        toIndex = ($.blockchain.path.length - 1) - ($.blockchain.height - toHeight);
+
+    while(index <= toIndex) {
+        await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]), address);
+        index++;
+    }
+
+    state.analysingHistory = false;
+
+    // Process any block analysis that was postponed during the run
+    while(block = state.postponedBlocks.shift()) await analyseBlock(block);
+}
+
+function getHistory(address, full) {
+    return new Promise(function(resolve, reject) {
+        store.get('history', function(items) {
+            if(full) resolve(items.history[address]);
+            else     resolve(items.history[address].slice(0, 10));
+        });
+    });
+}
+
+async function _start() {
     if(Nimiq._core) {
         console.error('Nimiq is already running. _stop() first.');
         return false;
     }
 
+    await updateStoreSchema();
+
     store.get('active', function(items) {
-        console.log(items);
         var active = items.active;
 
-        if(typeof active === 'undefined') {
-            // Storage schema is not yet set
-            writeStoreSchema();
-            _start();
-            return;
-        }
-
         if(active) {
+            console.log('Loading active wallet', active);
             store.get('wallets', function(items) {
-                console.log(items);
                 var wallets = items.wallets;
                 updateState({numberOfWallets: Object.keys(wallets).length});
                 var privKey = wallets[active].key;
-                console.log("store.wallets." + active, privKey);
                 startNimiq({walletSeed: privKey});
             });
         }
         else {
             // Start basic Nimiq runtime to be able to access Nimiq subclasses
+            console.log('Loading minimal Nimiq instance');
             Nimiq.init($ => { window.$ = $; }, error => { console.error(error); });
         }
     });
@@ -255,78 +492,56 @@ function _stop() {
     $ = null;
 }
 
-// Storage schema
-// {
-//     version: 1,
-//     active: '<address>',
-//     wallets: {
-//         '<address>': {
-//              name: 'Wallet Nr 1',
-//              key: '<privateKey>'
-//         },
-//         '<address>': {
-//              name: 'Wallet Nr 1',
-//              key: '<privateKey>'
-//         }
-//     }
-// };
-function writeStoreSchema() {
-    // TODO Save-guard against overwriting existing data
-
-    var schema = {
-        version: 1,
-        active: null,
-        wallets: {}
-    };
-
-    store.set(schema, function() {
-        if(chrome.runtime.lastError) console.log(runtime.lastError);
-        else console.log("Schema stored");
-    });
-}
-
-async function importPrivateKey(privKey, name) {
+async function importPrivateKey(privKey) {
     // TODO Validate privKey format
 
     var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
-        address = address.toHex();
+        address = address.toHex(),
+        name    = address.substring(0, 6);
 
-    if(!name) name = address.substring(0, 6);
+    try {
+        await new Promise(function(resolve, reject) {
+            store.get(['wallets', 'history'], function(items) {
+                var wallets = items.wallets;
+                var history = items.history;
 
-    return new Promise(function(resolve, reject) {
-        store.get('wallets', function(items) {
-            console.log(items);
-
-            var wallets = items.wallets;
-
-            // If this is the first wallet created, activate it
-            // var activate = Object.keys(wallets).length === 0;
-
-            wallets[address] = {
-                name: name,
-                key: privKey
-            };
-
-            store.set({wallets: wallets}, function() {
-                if(chrome.runtime.lastError) console.log(runtime.lastError);
-                else /*if(activate)
-                    store.set({active: address}, function() {
-                        if(chrome.runtime.lastError) console.log(runtime.lastError);
-                        else {
-                            console.log("Stored and activated", address);
-                            switchWallet(address);
-                            updateState({numberOfWallets: Object.keys(wallets).length});
-                            resolve();
-                        }
-                    });
-                else */{
-                    console.log("Stored", address);
-                    updateState({numberOfWallets: Object.keys(wallets).length});
-                    resolve(address);
+                if(wallets[address]) {
+                    reject(new Error('Wallet already exists'));
+                    return;
                 }
+
+                wallets[address] = {
+                    name: name,
+                    key: privKey
+                };
+
+                history[address] = [];
+
+                store.set({wallets: wallets, history: history}, function() {
+                    if(chrome.runtime.lastError) console.error(runtime.lastError);
+                    else {
+                        console.log("Stored", address);
+                        updateState({numberOfWallets: Object.keys(wallets).length});
+                        resolve(address);
+                    }
+                });
             });
         });
-    });
+    }
+    catch(e) {
+        console.error(e);
+        return;
+    }
+
+    if(state.activeWallet.address) { // Only analyse history if this is not the first imported wallet
+        var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
+
+        if(balance.value > 0 || balance.nonce > 0) {
+            state.analysingHistory = true;
+            analyseHistory(0, $.blockchain.height, address);
+        }
+        else console.log('Imported wallet has balance=0 and nonce=0. Not analysing history');
+    }
 }
 
 async function listWallets() {
@@ -352,13 +567,13 @@ async function listWallets() {
 }
 
 function switchWallet(address) {
+    if(state.analysingHistory) return false;
+
     store.set({active: address}, function() {
-        if(chrome.runtime.lastError) console.log(runtime.lastError);
+        if(chrome.runtime.lastError) console.error(runtime.lastError);
         else {
             console.log("Activated", address);
             store.get('wallets', function(items) {
-                console.log(items);
-
                 var wallets = items.wallets;
 
                 updateState({activeWallet: {
@@ -377,13 +592,11 @@ function switchWallet(address) {
 async function updateName(address, name) {
     return new Promise(function(resolve, reject) {
         store.get('wallets', function(items) {
-            console.log(items);
-
             var wallets = items.wallets;
             wallets[address].name = name;
 
             store.set({wallets: wallets}, function() {
-                if(chrome.runtime.lastError) console.log(runtime.lastError);
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
                 else {
                     console.log("Stored name", name, address);
                     if(address === state.activeWallet.address) {
@@ -407,14 +620,15 @@ async function createNewWallet() {
 
 async function removeWallet(address) {
     return new Promise(function(resolve, reject) {
-        store.get('wallets', function(items) {
-            console.log(items);
-
+        store.get(['wallets', 'history'], function(items) {
             var wallets = items.wallets;
-            delete wallets[address];
+            var history = items.history;
 
-            store.set({wallets: wallets}, function() {
-                if(chrome.runtime.lastError) console.log(runtime.lastError);
+            delete wallets[address];
+            delete history[address];
+
+            store.set({wallets: wallets, history: history}, function() {
+                if(chrome.runtime.lastError) console.error(runtime.lastError);
                 else {
                     console.log("Removed wallet", address);
                     updateState({numberOfWallets: Object.keys(wallets).length});

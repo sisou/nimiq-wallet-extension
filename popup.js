@@ -1,23 +1,25 @@
 /* jshint esversion: 6 */
 
 // Cache all document node pointers
-var $address          = document.getElementById('activeWalletAddress'),
-    $name             = document.getElementById('activeWalletName'),
-    $identicon        = document.getElementById('activeWalletIdenticon'),
-    $balance          = document.getElementById('activeWalletBalance'),
-    $newTx            = document.getElementById('new-tx'),
-    $txsList          = document.getElementById('txs-list'),
-    $statusIndicator  = document.getElementById('statusIndicator'),
-    $status           = document.getElementById('status'),
-    $height           = document.getElementById('height'),
-    $loadingScreen    = document.getElementById('loading-screen'),
-    $loadingHeight    = document.getElementById('loading-height'),
-    $loadingProgress  = document.getElementById('loading-progress-bar'),
-    $peers            = document.getElementById('peers'),
-    $walletManagement = document.getElementById('wallet-management'),
-    $walletImport     = document.getElementById('wallet-import'),
-    $walletList       = document.getElementById('wallet-list'),
-    $toast            = document.getElementById('toast');
+var $address            = document.getElementById('activeWalletAddress'),
+    $name               = document.getElementById('activeWalletName'),
+    $identicon          = document.getElementById('activeWalletIdenticon'),
+    $balance            = document.getElementById('activeWalletBalance'),
+    $newTx              = document.getElementById('new-tx'),
+    $pendingHistoryList = document.getElementById('pending-history-list'),
+    $historyList        = document.getElementById('history-list'),
+    $statusIndicator    = document.getElementById('statusIndicator'),
+    $status             = document.getElementById('status'),
+    $height             = document.getElementById('height'),
+    $loadingScreen      = document.getElementById('loading-screen'),
+    $loadingHeight      = document.getElementById('loading-height'),
+    $loadingProgress    = document.getElementById('loading-progress-bar'),
+    $peers              = document.getElementById('peers'),
+    $walletManagement   = document.getElementById('wallet-management'),
+    $walletImport       = document.getElementById('wallet-import'),
+    $walletList         = document.getElementById('wallet-list'),
+    $toast              = document.getElementById('toast'),
+    $version            = document.getElementById('version');
 
 // Cache all input elements
 var $buttonCopyAddress        = document.getElementById('buttonActiveWalletCopyAddress'),
@@ -147,7 +149,7 @@ async function updateWalletList() {
         }
 
         listItem.innerHTML = `
-            ${active ? `<div class="wallet-identicon" title="Active wallet"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`}&nbsp;
+            ${active ? `<div class="wallet-identicon" title="Active wallet"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`}&#8203;
 
             <span class="wallet-name">${wallets[address].name}</span> <i class="fa fa-pencil wallet-edit-name" title="Edit name"></i>
 
@@ -167,15 +169,6 @@ async function updateWalletList() {
         listItem.querySelector('.wallet-identicon').insertBefore(createIdenticon(address), listItem.querySelector('.wallet-identicon').firstChild);
 
         walletListItems.appendChild(listItem);
-
-        /* html += '<input type="text" value="' + wallets[address].name + '" id="' + address + '-name">';
-        html += '<button data-wallet="' + address + '" class="update-name">Edit</button> ';
-        html += '<button data-wallet="' + address + '" class="use-wallet">Use</button> ';
-        if(state.activeWallet.address && state.activeWallet.address !== address)
-            html += '<button data-wallet="' + address + '" class="remove-wallet">Remove</button><br>';
-        html += '<hash>' + address + '</hash><br>';
-        html += 'Balance: ' + formatBalance(wallets[address].balance);
-        html += '</li>'; */
     }
 
     while ($walletList.firstChild) {
@@ -186,30 +179,75 @@ async function updateWalletList() {
 }
 updateWalletList();
 
-function renderTxs(outgoingTx, incomingTx) {
-    var html = '';
+function renderPendingTxs(pendingTxs) {
+    let pendingTxsItems = document.createDocumentFragment();
 
-    if(outgoingTx.length) {
-        html += '<strong>Pending Outgoing Transactions</strong><ul>';
-        for(tx of outgoingTx) {
-            html += '<li>To: <hash style="font-size: 11px;">' + tx.receiver + '</hash><br>- <span class="icon-nimiq">' + formatBalance(tx.value)  + '</span>' + /*'<br><em>' + tx.message + '</em>' + */'</li>';
-        }
-        html += '</ul>';
+    for(tx of pendingTxs) {
+        let listItem = document.createElement('div');
+        listItem.classList.add('history-list-item', 'active');
+
+        listItem.innerHTML = `
+            ${tx.value ? `<span class="event-balance icon-nimiq ${tx.type === 'receiving' ? 'green">+' : 'red">-'}${formatBalance(tx.value)}&#8203;</span>` : ``}
+            <span class="event-type pending">${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)} transaction</span><br>
+            ${tx.type === 'receiving' ? '&larr;' : '&rarr;'} <hash class="event-address">${tx.address}</hash>
+        `;
+
+        pendingTxsItems.appendChild(listItem);
     }
 
-    if(incomingTx.length) {
-        html += '<strong>Pending Incoming Transactions</strong><ul>';
-        for(tx of incomingTx) {
-            html += '<li>From: <hash style="font-size: 11px;">' + tx.sender + '</hash><br>+ <span class="icon-nimiq">' + formatBalance(tx.value) + '</span>' + /*'<br><em>' + tx.message + '</em>' + */'</li>';
-        }
-        html += '</ul>';
+    while ($pendingHistoryList.firstChild) {
+        $pendingHistoryList.removeChild($pendingHistoryList.firstChild);
     }
 
-    if(html !== '') html = html + '<hr>';
-
-    $txsList.innerHTML = html;
+    $pendingHistoryList.appendChild(pendingTxsItems);
 }
-renderTxs(state.outgoingTx, state.incomingTx);
+renderPendingTxs(state.pendingTxs);
+
+async function updateHistory() {
+    if(state.activeWallet.address) renderHistory(await bgPage.getHistory(state.activeWallet.address));
+}
+
+function renderHistory(history) {
+    let historyItems = document.createDocumentFragment();
+
+    for(event of history) {
+        let listItem = document.createElement('div');
+        listItem.classList.add('history-list-item');
+
+        event.timestamp = (new Date(event.timestamp * 1000));
+
+        switch(event.type) {
+            case 'received':
+            case 'sent':
+                listItem.innerHTML = `
+                    <span class="event-balance icon-nimiq ${event.type === 'received' ? 'green">+' : 'red">-'}${formatBalance(event.value)}&#8203;</span>
+                    <span class="event-type">${event.type.charAt(0).toUpperCase() + event.type.slice(1)} transaction</span><br>
+                    <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
+                    ${event.type === 'received' ? '&larr;' : '&rarr;'} <hash class="event-address">${event.address}</hash>
+                `; break;
+            case 'blockmined':
+                listItem.innerHTML = `
+                    <span class="event-balance icon-nimiq green">+${formatBalance(event.value)}&#8203;</span>
+                    <span class="event-type">Block mined</span><br>
+                    <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
+                `; break;
+            case 'historygap':
+                listItem.innerHTML = `
+                    <span class="event-type">No data available</span><br>
+                    before <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
+                `; break;
+        }
+
+        historyItems.appendChild(listItem);
+    }
+
+    while ($historyList.firstChild) {
+        $historyList.removeChild($historyList.firstChild);
+    }
+
+    $historyList.appendChild(historyItems);
+}
+updateHistory();
 
 function handleStatus(status) {
     if(state.restarting && status === 'Consensus lost')
@@ -223,6 +261,7 @@ function handleStatus(status) {
 function handleHeight(height) {
     if(state.status === 'Consensus established') {
         $height.innerText = height;
+        updateHistory();
         updateWalletList();
     }
     else {
@@ -279,6 +318,7 @@ async function messageReceived(update) {
                                  $address.innerText      = state.activeWallet.address;
                                  $balance.innerText      = formatBalance(state.activeWallet.balance);
                                  $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
+                                 updateHistory();
                                  updateWalletList();
                                  break;
             case 'status':       handleStatus(state.status); break;
@@ -287,8 +327,7 @@ async function messageReceived(update) {
             case 'peers':        $peers.innerText        = state.peers; break;
             case 'mining':       setMinerStatus(state.mining); break;
             case 'hashrate':     $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate)); break;
-            case 'outgoingTx':   /* since outgoing and incoming txs are always send after each other, only work on incomingTx */ break;
-            case 'incomingTx':   renderTxs(state.outgoingTx, state.incomingTx); break;
+            case 'pendingTxs':   renderPendingTxs(state.pendingTxs); break;
         }
     }
 }
@@ -332,15 +371,22 @@ async function removeWallet(address) {
 }
 
 function switchWallet(address) {
+    var result = bgPage.switchWallet(address);
+
+    if(result === false) {
+        showToast('Analysing history, please wait', true);
+        return false;
+    }
+
     if(state.activeWallet.address)
         state.restarting = true;
 
     $loadingScreen.classList.add('show-instant');
 
-    bgPage.switchWallet(address);
+    return true;
 }
 
-function showToast(msg) {
+function showToast(msg, longer) {
     $toast.classList.remove('show', 'fade-out');
 
     $toast.firstChild.innerText = msg;
@@ -349,11 +395,11 @@ function showToast(msg) {
 
     window.setTimeout(() => {
         $toast.classList.add('fade-out');
-    }, 200);
+    }, longer ? 1200 : 200);
 
     window.setTimeout(() => {
         $toast.classList.remove('show', 'fade-out');
-    }, 500); // 200 + 300 from CSS transition
+    }, longer ? 1500 : 500); // 200 + 300 from CSS transition
 }
 
 function clipboard(data) {
@@ -408,8 +454,7 @@ $walletList.addEventListener('click', e => {
 
     if(target.matches('button.use-wallet')) {
         const address = target.getAttribute('data-wallet');
-        switchWallet(address);
-        $buttonCloseMyWallets.click();
+        if(switchWallet(address)) $buttonCloseMyWallets.click();
     }
     else if(target.matches('i.wallet-edit-name')) {
         target.parentNode.querySelector('.wallet-name').style.display = 'none';
@@ -476,3 +521,5 @@ $buttonNewWallet.addEventListener('click', async e => {
     }
     $buttonCloseImportWallets.click();
 });
+
+$version.innerText = 'v' + chrome.runtime.getManifest().version;

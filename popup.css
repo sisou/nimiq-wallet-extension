@@ -238,23 +238,36 @@ header nav button:hover {
     color: #FFC107;
 }
 
-#wallet-list {
+#wallet-list,
+#history-wrapper {
     overflow-y: overlay;
     height: 334px;
 }
 
-#wallet-list::-webkit-scrollbar {
+#history-wrapper {
+    height: 236px;
+}
+
+#wallet-list::-webkit-scrollbar,
+#history-wrapper::-webkit-scrollbar {
     width: 6px;
     height: 6px;
     margin-left: -6px;
 }
 
-#wallet-list::-webkit-scrollbar-thumb {
+#wallet-list::-webkit-scrollbar-thumb,
+#history-wrapper::-webkit-scrollbar-thumb {
     background-color: #888;
     border-radius: 3px;
 }
 
-.wallet-list-item {
+#wallet-list::-webkit-scrollbar-thumb:hover,
+#history-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: #666;
+}
+
+.wallet-list-item,
+.history-list-item {
     overflow: auto;
     background: #F0F0F0;
     padding: 1em;
@@ -262,11 +275,22 @@ header nav button:hover {
     margin-bottom: 0.5em;
 }
 
-.wallet-list-item:last-child {
+#pending-history-list .history-list-item {
+    background: none;
+    border: 1px solid #F0F0F0;
+}
+
+.wallet-list-item:last-child,
+.history-list-item:last-child {
     margin-bottom: 0;
 }
 
-.wallet-list-item.active {
+#pending-history-list .history-list-item:last-child {
+    margin-bottom: 0.5em;
+}
+
+.wallet-list-item.active,
+.history-list-item.active {
     border-left: 4px solid #FFC107;
     padding-left: calc(1em - 4px);
 }
@@ -276,6 +300,47 @@ header nav button:hover {
     padding-bottom: 4px;
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
+}
+
+.event-balance {
+    float: right;
+}
+
+.event-balance.green {
+    color: green;
+}
+
+.event-balance.red {
+    color: red;
+}
+
+.event-type {
+    font-weight: 600;
+}
+
+.event-type.pending::after {
+    content: "";
+    animation: event-pending 1.6s infinite;
+}
+
+@keyframes event-pending {
+    0%    { content: "" }
+    24.5% { content: "" }
+    25.5% { content: "." }
+    49.5% { content: "." }
+    50.5% { content: ".." }
+    74.5% { content: ".." }
+    75.5% { content: "..." }
+    100%  { content: "..." }
+}
+
+.event-height {
+    opacity: 0.6;
+}
+
+.event-address {
+    font-size: 11px;
+    color: #888;
 }
 
 .wallet-identicon {
@@ -514,4 +579,12 @@ li {
     background: rgba(0, 0, 0, 0.6);
     color: white;
     border-radius: 6px;
+}
+
+#version  {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 10px;
+    color: #888;
 }
