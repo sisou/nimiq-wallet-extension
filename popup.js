@@ -375,10 +375,14 @@ function switchWallet(address) {
 
     $loadingScreen.classList.add('show-instant');
 
-    bgPage.switchWallet(address);
+    var result = bgPage.switchWallet(address);
+
+    if(result === false) {
+        showToast('Analysing history, please wait', true);
+    }
 }
 
-function showToast(msg) {
+function showToast(msg, longer) {
     $toast.classList.remove('show', 'fade-out');
 
     $toast.firstChild.innerText = msg;
@@ -387,11 +391,11 @@ function showToast(msg) {
 
     window.setTimeout(() => {
         $toast.classList.add('fade-out');
-    }, 200);
+    }, longer ? 1200 : 200);
 
     window.setTimeout(() => {
         $toast.classList.remove('show', 'fade-out');
-    }, 500); // 200 + 300 from CSS transition
+    }, longer ? 1500 : 500); // 200 + 300 from CSS transition
 }
 
 function clipboard(data) {

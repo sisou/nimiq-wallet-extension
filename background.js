@@ -566,6 +566,8 @@ async function listWallets() {
 }
 
 function switchWallet(address) {
+    if(state.analysingHistory) return false;
+
     store.set({active: address}, function() {
         if(chrome.runtime.lastError) console.error(runtime.lastError);
         else {
