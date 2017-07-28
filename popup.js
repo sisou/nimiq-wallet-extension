@@ -317,6 +317,7 @@ async function messageReceived(update) {
                                  $address.innerText      = state.activeWallet.address;
                                  $balance.innerText      = formatBalance(state.activeWallet.balance);
                                  $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
+                                 updateHistory();
                                  updateWalletList();
                                  break;
             case 'status':       handleStatus(state.status); break;
