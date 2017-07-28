@@ -435,7 +435,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
             });
         });
 
-        setUnreadEventsCount('!');
+        // setUnreadEventsCount('!');
     }
 
     // Translate heights into path indices
