@@ -470,7 +470,7 @@ chrome.browserAction.setBadgeBackgroundColor({color: 'firebrick'});
 function setUnreadEventsCount(count) {
     count = count || '';
 
-    if(!popupIsOpen()) chrome.browserAction.setBadgeText({text: count.toString()});
+    if(!popupIsOpen() || count === '') chrome.browserAction.setBadgeText({text: count.toString()});
 }
 
 async function _start() {
