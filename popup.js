@@ -187,7 +187,7 @@ function renderPendingTxs(pendingTxs) {
         listItem.classList.add('history-list-item', 'active');
 
         listItem.innerHTML = `
-            ${tx.value ? `<span class="event-balance icon-nimiq ${tx.type === 'receiving' ? 'green">+' : 'red">-'}${formatBalance(tx.value)}</span>&#8203;` : ``}
+            ${tx.value ? `<span class="event-balance icon-nimiq ${tx.type === 'receiving' ? 'green">+' : 'red">-'}${formatBalance(tx.value)}&#8203;</span>` : ``}
             <span class="event-type pending">${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)} transaction</span><br>
             ${tx.type === 'receiving' ? '&larr;' : '&rarr;'} <hash class="event-address">${tx.address}</hash>
         `;
@@ -220,14 +220,14 @@ function renderHistory(history) {
             case 'received':
             case 'sent':
                 listItem.innerHTML = `
-                    <span class="event-balance icon-nimiq ${event.type === 'received' ? 'green">+' : 'red">-'}${formatBalance(event.value)}</span>&#8203;
+                    <span class="event-balance icon-nimiq ${event.type === 'received' ? 'green">+' : 'red">-'}${formatBalance(event.value)}&#8203;</span>
                     <span class="event-type">${event.type.charAt(0).toUpperCase() + event.type.slice(1)} transaction</span><br>
                     <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
                     ${event.type === 'received' ? '&larr;' : '&rarr;'} <hash class="event-address">${event.address}</hash>
                 `; break;
             case 'blockmined':
                 listItem.innerHTML = `
-                    <span class="event-balance icon-nimiq green">+${formatBalance(event.value)}</span>&#8203;
+                    <span class="event-balance icon-nimiq green">+${formatBalance(event.value)}&#8203;</span>
                     <span class="event-type">Block mined</span><br>
                     <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
                 `; break;
