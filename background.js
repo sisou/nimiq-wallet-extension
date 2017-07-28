@@ -66,8 +66,7 @@ var state = {
     status: 'Not connected',
     mining: false,
     hashrate: 0,
-    outgoingTx: [],
-    incomingTx: [],
+    pendingTxs: [],
     analysingHistory: false,
     postponedBlocks: []
 };
@@ -132,32 +131,25 @@ function _onPeersChanged() {
 async function _mempoolChanged() {
     var txs = $.mempool.getTransactions();
 
-    var outgoing = [],
-        incoming = [];
+    var pendingTxs = [];
 
     for (var tx of txs) {
-        var senderAddr = await tx.getSenderAddr();
+        var sender   = (await tx.getSenderAddr()).toHex(),
+            receiver = tx.recipientAddr.toHex();
 
-        var value = Nimiq.Policy.satoshisToCoins(tx.value);
-        var fee = Nimiq.Policy.satoshisToCoins(tx.fee);
-
-        var txObj = {
-            sender: senderAddr.toHex(),
-            receiver: tx.recipientAddr.toHex(),
-            value: value,
-            message: null, // TODO Fill when available
-            fee: fee,
-            nonce: tx.nonce
-        };
-
-        if(txObj.sender === state.activeWallet.address)
-            outgoing.push(txObj);
-        if(txObj.receiver === state.activeWallet.address)
-            incoming.push(txObj);
+        if([sender, receiver].indexOf(state.activeWallet.address) > -1) {
+            pendingTxs.push({
+                address : sender === state.activeWallet.address ? receiver : sender,
+                value: Nimiq.Policy.satoshisToCoins(tx.value),
+                type: sender === state.activeWallet.address ? 'sending' : 'receiving'
+                // message: null, // TODO Fill when available
+                // fee: Nimiq.Policy.satoshisToCoins(tx.fee),
+                // nonce: tx.nonce
+            });
+        }
     }
 
-    updateState({outgoingTx: outgoing});
-    updateState({incomingTx: incoming});
+    updateState({pendingTxs: pendingTxs});
 }
 
 function startNimiq(params) {

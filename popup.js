@@ -1,23 +1,24 @@
 /* jshint esversion: 6 */
 
 // Cache all document node pointers
-var $address          = document.getElementById('activeWalletAddress'),
-    $name             = document.getElementById('activeWalletName'),
-    $identicon        = document.getElementById('activeWalletIdenticon'),
-    $balance          = document.getElementById('activeWalletBalance'),
-    $newTx            = document.getElementById('new-tx'),
-    $historyList      = document.getElementById('history-list'),
-    $statusIndicator  = document.getElementById('statusIndicator'),
-    $status           = document.getElementById('status'),
-    $height           = document.getElementById('height'),
-    $loadingScreen    = document.getElementById('loading-screen'),
-    $loadingHeight    = document.getElementById('loading-height'),
-    $loadingProgress  = document.getElementById('loading-progress-bar'),
-    $peers            = document.getElementById('peers'),
-    $walletManagement = document.getElementById('wallet-management'),
-    $walletImport     = document.getElementById('wallet-import'),
-    $walletList       = document.getElementById('wallet-list'),
-    $toast            = document.getElementById('toast');
+var $address            = document.getElementById('activeWalletAddress'),
+    $name               = document.getElementById('activeWalletName'),
+    $identicon          = document.getElementById('activeWalletIdenticon'),
+    $balance            = document.getElementById('activeWalletBalance'),
+    $newTx              = document.getElementById('new-tx'),
+    $pendingHistoryList = document.getElementById('pending-history-list'),
+    $historyList        = document.getElementById('history-list'),
+    $statusIndicator    = document.getElementById('statusIndicator'),
+    $status             = document.getElementById('status'),
+    $height             = document.getElementById('height'),
+    $loadingScreen      = document.getElementById('loading-screen'),
+    $loadingHeight      = document.getElementById('loading-height'),
+    $loadingProgress    = document.getElementById('loading-progress-bar'),
+    $peers              = document.getElementById('peers'),
+    $walletManagement   = document.getElementById('wallet-management'),
+    $walletImport       = document.getElementById('wallet-import'),
+    $walletList         = document.getElementById('wallet-list'),
+    $toast              = document.getElementById('toast');
 
 // Cache all input elements
 var $buttonCopyAddress        = document.getElementById('buttonActiveWalletCopyAddress'),
@@ -167,15 +168,6 @@ async function updateWalletList() {
         listItem.querySelector('.wallet-identicon').insertBefore(createIdenticon(address), listItem.querySelector('.wallet-identicon').firstChild);
 
         walletListItems.appendChild(listItem);
-
-        /* html += '<input type="text" value="' + wallets[address].name + '" id="' + address + '-name">';
-        html += '<button data-wallet="' + address + '" class="update-name">Edit</button> ';
-        html += '<button data-wallet="' + address + '" class="use-wallet">Use</button> ';
-        if(state.activeWallet.address && state.activeWallet.address !== address)
-            html += '<button data-wallet="' + address + '" class="remove-wallet">Remove</button><br>';
-        html += '<hash>' + address + '</hash><br>';
-        html += 'Balance: ' + formatBalance(wallets[address].balance);
-        html += '</li>'; */
     }
 
     while ($walletList.firstChild) {
@@ -186,30 +178,31 @@ async function updateWalletList() {
 }
 updateWalletList();
 
-function renderTxs(outgoingTx, incomingTx) {
-    var html = '';
+function renderPendingTxs(pendingTxs) {
+    let pendingTxsItems = document.createDocumentFragment();
 
-    if(outgoingTx.length) {
-        html += '<strong>Pending Outgoing Transactions</strong><ul>';
-        for(tx of outgoingTx) {
-            html += '<li>To: <hash style="font-size: 11px;">' + tx.receiver + '</hash><br>- <span class="icon-nimiq">' + formatBalance(tx.value)  + '</span>' + /*'<br><em>' + tx.message + '</em>' + */'</li>';
-        }
-        html += '</ul>';
+    for(tx of pendingTxs) {
+        let listItem = document.createElement('div');
+        listItem.classList.add('history-list-item');
+
+        console.log(tx);
+
+        listItem.innerHTML = `
+            ${tx.value ? `<span class="event-balance icon-nimiq ${tx.type === 'receiving' ? 'green">+' : 'red">-'}${formatBalance(tx.value)}</span>` : ``}
+            <span class="event-type pending">${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)} transaction</span><br>
+            ${tx.type === 'receiving' ? '&larr;' : '&rarr;'} <hash class="event-address">${tx.address}</hash>
+        `;
+
+        pendingTxsItems.appendChild(listItem);
     }
 
-    if(incomingTx.length) {
-        html += '<strong>Pending Incoming Transactions</strong><ul>';
-        for(tx of incomingTx) {
-            html += '<li>From: <hash style="font-size: 11px;">' + tx.sender + '</hash><br>+ <span class="icon-nimiq">' + formatBalance(tx.value) + '</span>' + /*'<br><em>' + tx.message + '</em>' + */'</li>';
-        }
-        html += '</ul>';
+    while ($pendingHistoryList.firstChild) {
+        $pendingHistoryList.removeChild($pendingHistoryList.firstChild);
     }
 
-    if(html !== '') html = html + '<hr>';
-
-    $historyList.innerHTML = html;
+    $pendingHistoryList.appendChild(pendingTxsItems);
 }
-renderTxs(state.outgoingTx, state.incomingTx);
+renderPendingTxs(state.pendingTxs);
 
 function handleStatus(status) {
     if(state.restarting && status === 'Consensus lost')
@@ -287,8 +280,7 @@ async function messageReceived(update) {
             case 'peers':        $peers.innerText        = state.peers; break;
             case 'mining':       setMinerStatus(state.mining); break;
             case 'hashrate':     $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate)); break;
-            case 'outgoingTx':   /* since outgoing and incoming txs are always send after each other, only work on incomingTx */ break;
-            case 'incomingTx':   renderTxs(state.outgoingTx, state.incomingTx); break;
+            case 'pendingTxs':   renderPendingTxs(state.pendingTxs); break;
         }
     }
 }
