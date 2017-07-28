@@ -18,7 +18,8 @@ var $address            = document.getElementById('activeWalletAddress'),
     $walletManagement   = document.getElementById('wallet-management'),
     $walletImport       = document.getElementById('wallet-import'),
     $walletList         = document.getElementById('wallet-list'),
-    $toast              = document.getElementById('toast');
+    $toast              = document.getElementById('toast'),
+    $version            = document.getElementById('version');
 
 // Cache all input elements
 var $buttonCopyAddress        = document.getElementById('buttonActiveWalletCopyAddress'),
@@ -520,3 +521,5 @@ $buttonNewWallet.addEventListener('click', async e => {
     }
     $buttonCloseImportWallets.click();
 });
+
+$version.innerText = 'v' + chrome.runtime.getManifest().version;
