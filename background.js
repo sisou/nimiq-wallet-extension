@@ -447,10 +447,11 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
     while(block = state.postponedBlocks.shift()) await analyseBlock(block);
 }
 
-function getHistory(address) {
+function getHistory(address, full) {
     return new Promise(function(resolve, reject) {
         store.get('history', function(items) {
-            resolve(items.history[address]);
+            if(full) resolve(items.history[address]);
+            else     resolve(items.history[address].slice(0, 10));
         });
     });
 }
