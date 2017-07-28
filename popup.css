@@ -280,7 +280,12 @@ header nav button:hover {
     margin-bottom: 0;
 }
 
-.wallet-list-item.active {
+#pending-history-list .history-list-item:last-child {
+    margin-bottom: 0.5em;
+}
+
+.wallet-list-item.active,
+.history-list-item.active {
     border-left: 4px solid #FFC107;
     padding-left: calc(1em - 4px);
 }

@@ -183,9 +183,7 @@ function renderPendingTxs(pendingTxs) {
 
     for(tx of pendingTxs) {
         let listItem = document.createElement('div');
-        listItem.classList.add('history-list-item');
-
-        console.log(tx);
+        listItem.classList.add('history-list-item', 'active');
 
         listItem.innerHTML = `
             ${tx.value ? `<span class="event-balance icon-nimiq ${tx.type === 'receiving' ? 'green">+' : 'red">-'}${formatBalance(tx.value)}</span>` : ``}
@@ -204,6 +202,52 @@ function renderPendingTxs(pendingTxs) {
 }
 renderPendingTxs(state.pendingTxs);
 
+async function updateHistory() {
+    if(state.activeWallet.address) renderHistory(await bgPage.getHistory(state.activeWallet.address));
+}
+
+function renderHistory(history) {
+    let historyItems = document.createDocumentFragment();
+
+    for(event of history) {
+        let listItem = document.createElement('div');
+        listItem.classList.add('history-list-item');
+
+        event.timestamp = (new Date(event.timestamp * 1000));
+
+        switch(event.type) {
+            case 'received':
+            case 'sent':
+                listItem.innerHTML = `
+                    <span class="event-balance icon-nimiq ${event.type === 'receiving' ? 'green">+' : 'red">-'}${formatBalance(event.value)}</span>
+                    <span class="event-type">${event.type.charAt(0).toUpperCase() + event.type.slice(1)} transaction</span><br>
+                    <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
+                    ${event.type === 'receiving' ? '&larr;' : '&rarr;'} <hash class="event-address">${event.address}</hash>
+                `; break;
+            case 'blockmined':
+                listItem.innerHTML = `
+                    <span class="event-balance icon-nimiq green">+${formatBalance(event.value)}</span>
+                    <span class="event-type">Block mined</span><br>
+                    <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
+                `; break;
+            case 'historygap':
+                listItem.innerHTML = `
+                    <span class="event-type">No history available</span><br>
+                    before <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
+                `; break;
+        }
+
+        historyItems.appendChild(listItem);
+    }
+
+    while ($historyList.firstChild) {
+        $historyList.removeChild($historyList.firstChild);
+    }
+
+    $historyList.appendChild(historyItems);
+}
+updateHistory();
+
 function handleStatus(status) {
     if(state.restarting && status === 'Consensus lost')
         state.restarting = false;
@@ -216,6 +260,7 @@ function handleStatus(status) {
 function handleHeight(height) {
     if(state.status === 'Consensus established') {
         $height.innerText = height;
+        updateHistory();
         updateWalletList();
     }
     else {
