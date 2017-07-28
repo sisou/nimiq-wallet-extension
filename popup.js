@@ -370,16 +370,19 @@ async function removeWallet(address) {
 }
 
 function switchWallet(address) {
+    var result = bgPage.switchWallet(address);
+
+    if(result === false) {
+        showToast('Analysing history, please wait', true);
+        return false;
+    }
+
     if(state.activeWallet.address)
         state.restarting = true;
 
     $loadingScreen.classList.add('show-instant');
 
-    var result = bgPage.switchWallet(address);
-
-    if(result === false) {
-        showToast('Analysing history, please wait', true);
-    }
+    return true;
 }
 
 function showToast(msg, longer) {
@@ -450,8 +453,7 @@ $walletList.addEventListener('click', e => {
 
     if(target.matches('button.use-wallet')) {
         const address = target.getAttribute('data-wallet');
-        switchWallet(address);
-        $buttonCloseMyWallets.click();
+        if(switchWallet(address)) $buttonCloseMyWallets.click();
     }
     else if(target.matches('i.wallet-edit-name')) {
         target.parentNode.querySelector('.wallet-name').style.display = 'none';
