@@ -219,10 +219,10 @@ function renderHistory(history) {
             case 'received':
             case 'sent':
                 listItem.innerHTML = `
-                    <span class="event-balance icon-nimiq ${event.type === 'receiving' ? 'green">+' : 'red">-'}${formatBalance(event.value)}</span>
+                    <span class="event-balance icon-nimiq ${event.type === 'received' ? 'green">+' : 'red">-'}${formatBalance(event.value)}</span>
                     <span class="event-type">${event.type.charAt(0).toUpperCase() + event.type.slice(1)} transaction</span><br>
                     <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
-                    ${event.type === 'receiving' ? '&larr;' : '&rarr;'} <hash class="event-address">${event.address}</hash>
+                    ${event.type === 'received' ? '&larr;' : '&rarr;'} <hash class="event-address">${event.address}</hash>
                 `; break;
             case 'blockmined':
                 listItem.innerHTML = `
