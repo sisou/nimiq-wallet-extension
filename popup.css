@@ -241,11 +241,11 @@ header nav button:hover {
 #wallet-list,
 #history-wrapper {
     overflow-y: overlay;
-    height: 334px;
+    height: 333px;
 }
 
 #history-wrapper {
-    height: 236px;
+    height: 235px;
 }
 
 #wallet-list::-webkit-scrollbar,
