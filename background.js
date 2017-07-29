@@ -370,7 +370,7 @@ async function analyseBlock(block, address, triggeredManually) {
             timestamp: block.timestamp,
             height: block.height,
             type: 'blockmined',
-            value: Nimiq.Policy.BLOCK_REWARD
+            value: Nimiq.Policy.satoshisToCoins(Nimiq.Policy.BLOCK_REWARD)
         };
 
         console.log('Found event for', block.minerAddr.toHex(), event);
