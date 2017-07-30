@@ -6,6 +6,8 @@
   "description": "Manage your Nimiq wallets directly in your browser.",
   "version": "0.2.0",
 
+  "minimum_chrome_version": "58.0.0.0",
+
   "icons": {
      "16": "app-icon-16x16.png",
      "32": "app-icon-32x32.png",
@@ -20,11 +22,11 @@
   "sandbox": {
     "pages": ["sandbox.html"]
   },
-
   "browser_action": {
     "default_icon": "app-icon-19x19.png",
     "default_popup": "popup.html"
   },
+
   "incognito": "split",
   "content_security_policy": "script-src 'self' https://cdn.nimiq.com; object-src 'self'",
   "permissions": [
