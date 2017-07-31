@@ -552,7 +552,7 @@ async function importPrivateKey(privKey) {
                     else {
                         console.log("Stored", address);
                         updateState({numberOfWallets: Object.keys(wallets).length});
-                        resolve(address);
+                        resolve();
                     }
                 });
             });
@@ -560,7 +560,7 @@ async function importPrivateKey(privKey) {
     }
     catch(e) {
         console.error(e);
-        return;
+        return address;
     }
 
     if(state.activeWallet.address) { // Only analyse history if this is not the first imported wallet
@@ -572,6 +572,8 @@ async function importPrivateKey(privKey) {
         }
         else console.log('Imported wallet has balance=0 and nonce=0. Not analysing history');
     }
+
+    return address;
 }
 
 async function listWallets() {
