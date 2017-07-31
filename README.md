@@ -22,6 +22,9 @@ A contact list and creating cashlinks are coming soon!
 To install for development, follow these instructions: https://developer.chrome.com/extensions/getstarted#unpacked
 
 ## Changelog
+**v0.2.3**
+- Fix regression from v0.2.2 where the historygap event was not stored anymore
+
 **v0.2.2**
 - Fix import section not disappearing after initial import when popup is not reopened
 - Do not create historygap event for generated wallet on initial import

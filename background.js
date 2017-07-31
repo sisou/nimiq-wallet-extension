@@ -423,13 +423,13 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
             type: 'historygap'
         };
 
-        addresses.forEach(async function(address) {
+        for(address of addresses) {
             var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
             if(balance.value > 0 || balance.nonce > 0) {
                 console.log('Found event for', address, event);
                 history[address].unshift(event);
             }
-        });
+        }
 
         await new Promise(function(resolve, reject) {
             store.set({history: history}, function() {
