@@ -208,8 +208,8 @@ function renderPendingTxs(pendingTxs) {
 }
 renderPendingTxs(state.pendingTxs);
 
-async function updateHistory() {
-    if(state.activeWallet.address) renderHistory(await bgPage.getHistory(state.activeWallet.address));
+async function updateHistory(page) {
+    if(state.activeWallet.address) renderHistory(await bgPage.getHistory(state.activeWallet.address, page));
 }
 
 function renderHistory(history) {
@@ -241,6 +241,8 @@ function renderHistory(history) {
                     <span class="event-type">No data available</span><br>
                     before <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
                 `; break;
+            case 'loadmore':
+                listItem.innerHTML = `<button class="loadmore centered" data-page="${event.nextPage}">load more</button>`;
         }
 
         historyItems.appendChild(listItem);
@@ -448,6 +450,12 @@ $buttonSendTx.addEventListener('click', sendTransaction);
 $buttonToggleMining.addEventListener('click', e => {
     if(!state.mining) bgPage.startMining();
     else bgPage.stopMining();
+});
+
+$historyList.addEventListener('click', e => {
+    if(e.target.matches('.loadmore')) {
+        updateHistory(parseInt(e.target.getAttribute('data-page')));
+    }
 });
 
 $buttonShowMyWallets.addEventListener('click', e => {

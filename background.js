@@ -457,13 +457,22 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         while(block = state.postponedBlocks.shift()) await analyseBlock(block);
 }
 
-function getHistory(address, full) {
-    return new Promise(function(resolve, reject) {
+async function getHistory(address, page) {
+    page = page || 1;
+
+    var untilIndex = 10 * (page - 1) + 10;
+
+    var history = await new Promise(function(resolve, reject) {
         store.get('history', function(items) {
-            if(full) resolve(items.history[address]);
-            else     resolve(items.history[address].slice(0, 10));
+            resolve(items.history[address]);
         });
     });
+
+    var result = history.slice(0, untilIndex);
+
+    if(history.length > untilIndex) result.push({type: 'loadmore', nextPage: page + 1});
+
+    return result;
 }
 
 function popupIsOpen() {
