@@ -149,7 +149,12 @@ async function updateWalletList() {
         }
 
         listItem.innerHTML = `
-            ${active ? `<div class="wallet-identicon" title="Active wallet"></div>` : `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`}&#8203;
+            ${active ?
+                `<div class="wallet-identicon" title="Active wallet"></div>` :
+                wallets[address].analysingHistory ?
+                    `<div class="wallet-identicon" title="Analysing history..."><i class="fa fa-refresh fa-spin"></i></div>` :
+                    `<button class="use-wallet wallet-identicon" data-wallet="${address}" title="Use wallet">Use</button>`
+            }&#8203;
 
             <span class="wallet-name">${wallets[address].name}</span> <i class="fa fa-pencil wallet-edit-name" title="Edit name"></i>
 
@@ -304,6 +309,9 @@ async function messageReceived(update) {
             $buttonCloseImportWallets.classList.remove('show-instant');
         }
         $buttonCloseImportWallets.click();
+    }
+    else if(key === 'doneAnalysing') {
+        updateWalletList();
     }
     else {
         if(key === 'balance') {

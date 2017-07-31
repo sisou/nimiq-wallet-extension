@@ -349,10 +349,20 @@ header nav button:hover {
     float: left;
     border-radius: 8px;
     margin-right: 0.5em;
+    position: relative;
 }
 
-.wallet-identicon > * {
+.wallet-identicon canvas {
     border-radius: 8px;
+}
+
+.wallet-identicon .fa {
+    position: absolute;
+    left: 7px;
+    top: 4px;
+    font-size: 30px !important;
+    color: white !important;
+    cursor: auto !important;
 }
 
 .wallet-list-item .fa,

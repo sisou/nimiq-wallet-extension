@@ -447,8 +447,10 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         index++;
     }
 
-    if(address && state.analysingHistory.includes(address))
+    if(address && state.analysingHistory.includes(address)) {
         state.analysingHistory.splice(state.analysingHistory.indexOf(address), 1);
+        chrome.runtime.sendMessage({'doneAnalysing': address});
+    }
 
     // Process any block analysis that was postponed during the run
     if(state.analysingHistory.length === 0)
@@ -581,6 +583,8 @@ async function listWallets() {
             wallets[address].balance = 'loading...';
         }
     }
+
+    state.analysingHistory.forEach(address => wallets[address].analysingHistory = true);
 
     return wallets;
 }
