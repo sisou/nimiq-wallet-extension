@@ -137,7 +137,7 @@ async function _mempoolChanged() {
         var sender   = (await tx.getSenderAddr()).toHex(),
             receiver = tx.recipientAddr.toHex();
 
-        if([sender, receiver].indexOf(state.activeWallet.address) > -1) {
+        if([sender, receiver].includes(state.activeWallet.address)) {
             pendingTxs.push({
                 address : sender === state.activeWallet.address ? receiver : sender,
                 value: Nimiq.Policy.satoshisToCoins(tx.value),
@@ -332,7 +332,7 @@ async function analyseBlock(block, address, triggeredManually) {
                 sender   = (await tx.getSenderAddr()).toHex(),
                 receiver = tx.recipientAddr.toHex();
 
-            if(addresses.indexOf(receiver) > -1) {
+            if(addresses.includes(receiver)) {
                 let event = {
                     timestamp: block.timestamp,
                     height: block.height,
@@ -347,7 +347,7 @@ async function analyseBlock(block, address, triggeredManually) {
                 history[receiver].unshift(event);
             }
 
-            if(addresses.indexOf(sender) > -1) {
+            if(addresses.includes(sender)) {
                 let event = {
                     timestamp: block.timestamp,
                     height: block.height,
@@ -365,7 +365,7 @@ async function analyseBlock(block, address, triggeredManually) {
     }
 
     // Check minerAddr
-    if(addresses.indexOf(block.minerAddr.toHex()) > -1) {
+    if(addresses.includes(block.minerAddr.toHex())) {
         let event = {
             timestamp: block.timestamp,
             height: block.height,
@@ -447,7 +447,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         index++;
     }
 
-    if(address && state.analysingHistory.indexOf(address) > -1)
+    if(address && state.analysingHistory.includes(address))
         state.analysingHistory.splice(state.analysingHistory.indexOf(address), 1);
 
     // Process any block analysis that was postponed during the run
@@ -586,7 +586,7 @@ async function listWallets() {
 }
 
 function switchWallet(address) {
-    if(state.analysingHistory.indexOf(address) > -1) return false;
+    if(state.analysingHistory.includes(address)) return false;
 
     store.set({active: address}, function() {
         if(chrome.runtime.lastError) console.error(runtime.lastError);
