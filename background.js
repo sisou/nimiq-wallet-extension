@@ -67,7 +67,7 @@ var state = {
     mining: false,
     hashrate: 0,
     pendingTxs: [],
-    analysingHistory: false,
+    analysingHistory: [], // Store all addresses that are currently being analysed
     postponedBlocks: []
 };
 
@@ -306,7 +306,7 @@ async function analyseBlock(block, address, triggeredManually) {
         if(analysedHeight >= block.height) return;
     }
 
-    if(state.analysingHistory && !address) {
+    if(state.analysingHistory.length > 0 && !address) {
         // Postpone general analysis of new blocks until specific wallet history analysis is finished
         state.postponedBlocks.push(block);
         console.log('Postponing analysis of block', block.height);
@@ -447,10 +447,12 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         index++;
     }
 
-    state.analysingHistory = false;
+    if(address && state.analysingHistory.indexOf(address) > -1)
+        state.analysingHistory.splice(state.analysingHistory.indexOf(address), 1);
 
     // Process any block analysis that was postponed during the run
-    while(block = state.postponedBlocks.shift()) await analyseBlock(block);
+    if(state.analysingHistory.length === 0)
+        while(block = state.postponedBlocks.shift()) await analyseBlock(block);
 }
 
 function getHistory(address, full) {
@@ -554,7 +556,7 @@ async function importPrivateKey(privKey) {
         var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
 
         if(balance.value > 0 || balance.nonce > 0) {
-            state.analysingHistory = true;
+            state.analysingHistory.push(address);
             analyseHistory(0, $.blockchain.height, address);
         }
         else console.log('Imported wallet has balance=0 and nonce=0. Not analysing history');
@@ -584,7 +586,7 @@ async function listWallets() {
 }
 
 function switchWallet(address) {
-    if(state.analysingHistory) return false;
+    if(state.analysingHistory.indexOf(address) > -1) return false;
 
     store.set({active: address}, function() {
         if(chrome.runtime.lastError) console.error(runtime.lastError);
