@@ -13,6 +13,11 @@ A contact list and creating cashlinks are coming soon!
 
 > Developed for Chrome, but may also work in Firefox, Opera and other WebKit-based browsers.
 
+## Screenshots
+![Main screen](assets/screenshots/screenshot2.png?raw=true)
+![Wallet list](assets/screenshots/screenshot3.png?raw=true)
+![Import wallet](assets/screenshots/screenshot4.png?raw=true)
+
 ## Development
 To install for development, follow these instructions: https://developer.chrome.com/extensions/getstarted#unpacked
 
