@@ -483,7 +483,7 @@ chrome.browserAction.setBadgeBackgroundColor({color: 'firebrick'});
 function setUnreadEventsCount(count) {
     count = count || '';
 
-    if(!popupIsOpen() || count === '') chrome.browserAction.setBadgeText({text: count.toString()});
+    if(!popupIsOpen() || state.status !== 'Consensus established' || count === '') chrome.browserAction.setBadgeText({text: count.toString()});
 }
 
 async function _start() {

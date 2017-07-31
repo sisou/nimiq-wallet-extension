@@ -264,7 +264,7 @@ function renderHistory(history) {
 }
 updateHistory();
 
-bgPage.setUnreadEventsCount();
+if(state.status === 'Consensus established') bgPage.setUnreadEventsCount();
 
 function handleStatus(status) {
     if(state.restarting && status === 'Consensus lost')
@@ -301,6 +301,7 @@ function handleTargetHeight(targetHeight) {
         delete state.startHeight;
         handleHeight(state.height);
         $loadingScreen.classList.remove('show-instant');
+        bgPage.setUnreadEventsCount();
         document.getElementById('loading-targetHeight').innerText = '';
     }
 }
