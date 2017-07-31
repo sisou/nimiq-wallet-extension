@@ -317,7 +317,7 @@ async function messageReceived(update) {
         var address = await importPrivateKey(update.privKey);
         if(!state.activeWallet.address) {
             switchWallet(address);
-            $buttonCloseImportWallets.classList.remove('show-instant');
+            $walletImport.classList.remove('show-instant');
         }
         $buttonCloseImportWallets.click();
     }
@@ -525,7 +525,7 @@ $buttonImportPrivKey.addEventListener('click', async e => {
     var address = await importPrivateKey($inputPrivKey.value);
     if(!state.activeWallet.address) {
         switchWallet(address);
-        $buttonCloseImportWallets.classList.remove('show-instant');
+        $walletImport.classList.remove('show-instant');
     }
     $buttonCloseImportWallets.click();
 });
@@ -544,7 +544,7 @@ $buttonNewWallet.addEventListener('click', async e => {
     var address = await createNewWallet();
     if(!state.activeWallet.address) {
         switchWallet(address);
-        $buttonCloseImportWallets.classList.remove('show-instant');
+        $walletImport.classList.remove('show-instant');
     }
     $buttonCloseImportWallets.click();
 });
