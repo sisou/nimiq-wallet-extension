@@ -246,6 +246,14 @@ function renderHistory(history) {
         historyItems.appendChild(listItem);
     }
 
+    if(!history.length) {
+        let listItem = document.createElement('span');
+        listItem.id = 'historyPlaceholder';
+        listItem.innerText = 'No events';
+
+        historyItems.appendChild(listItem);
+    }
+
     while ($historyList.firstChild) {
         $historyList.removeChild($historyList.firstChild);
     }

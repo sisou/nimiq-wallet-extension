@@ -306,7 +306,7 @@ async function analyseBlock(block, address, triggeredManually) {
         if(analysedHeight >= block.height) return;
     }
 
-    if(state.analysingHistory.length > 0 && !address) {
+    if(state.analysingHistory.length && !address) {
         // Postpone general analysis of new blocks until specific wallet history analysis is finished
         state.postponedBlocks.push(block);
         console.log('Postponing analysis of block', block.height);
@@ -453,7 +453,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
     }
 
     // Process any block analysis that was postponed during the run
-    if(state.analysingHistory.length === 0)
+    if(!state.analysingHistory.length)
         while(block = state.postponedBlocks.shift()) await analyseBlock(block);
 }
 
