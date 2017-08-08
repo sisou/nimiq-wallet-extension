@@ -233,7 +233,7 @@ function renderHistory(history) {
             case 'blockmined':
                 listItem.innerHTML = `
                     <span class="event-balance icon-nimiq green">+${formatBalance(event.value)}&#8203;</span>
-                    <span class="event-type">Block mined</span><br>
+                    <span class="event-type">Mined block</span><br>
                     <span class="event-date">${event.timestamp.toLocaleString()}</span> <span class="event-height">(#${event.height})</span><br>
                 `; break;
             case 'historygap':

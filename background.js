@@ -366,11 +366,13 @@ async function analyseBlock(block, address, triggeredManually) {
 
     // Check minerAddr
     if(addresses.includes(block.minerAddr.toHex())) {
+        let fees = block.transactions.reduce((acc, tx) => acc + tx.fee, 0);
+
         let event = {
             timestamp: block.timestamp,
             height: block.height,
             type: 'blockmined',
-            value: Nimiq.Policy.satoshisToCoins(Nimiq.Policy.BLOCK_REWARD)
+            value: Nimiq.Policy.satoshisToCoins(Nimiq.Policy.BLOCK_REWARD + fees)
         };
 
         console.log('Found event for', block.minerAddr.toHex(), event);
