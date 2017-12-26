@@ -28,7 +28,7 @@
   },
 
   "incognito": "split",
-  "content_security_policy": "script-src 'self' https://cdn.nimiq.com; object-src 'self'",
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://cdn.nimiq.com; object-src 'self'",
   "permissions": [
     "storage",
     "unlimitedStorage",

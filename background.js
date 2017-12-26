@@ -89,6 +89,10 @@ function _onConsensusEstablished() {
     $.blockchain.on('head-changed', _updateBalance);
     _updateBalance();
 
+    store.get('analysedHeight', function(items) {
+        analyseHistory(items.analysedHeight + 1, $.blockchain.height);
+    });
+
     // If we want to start mining.
     // $.miner.startWork();
 }
@@ -156,12 +160,8 @@ async function _mempoolChanged() {
     updateState({pendingTxs: pendingTxs});
 }
 
-function startNimiq(params) {
+function startNimiq() {
     updateState({status: 'Connecting'});
-
-    var defaults = {};
-
-    var options = Object.assign({}, defaults, params);
 
     Nimiq.init(async () => {
         console.log('Nimiq loaded. Connecting and establishing consensus.');
@@ -196,14 +196,6 @@ function startNimiq(params) {
         $.consensus.on('established', () => _onConsensusEstablished());
         $.consensus.on('lost', () => _onConsensusLost());
 
-        var analysedHeight = await new Promise(function(resolve, reject) {
-            store.get('analysedHeight', function(items) {
-                resolve(items.analysedHeight);
-            });
-        });
-
-        await analyseHistory(analysedHeight + 1, $.blockchain.height);
-
         $.blockchain.on('head-changed', (block) => _onHeadChanged(block));
         _onHeadChanged($.blockchain.head, true);
 
@@ -220,7 +212,7 @@ function startNimiq(params) {
     }, function(error) {
         updateState({status: 'Not connected'});
         console.error(error);
-    }, options);
+    });
 }
 
 function messageReceived(msg) {
@@ -519,7 +511,7 @@ function setUnreadEventsCount(count) {
 }
 
 async function _start() {
-    if(!!$) {
+    if(typeof $ !== 'undefined' && !!$) {
         console.error('Nimiq is already running. _stop() first.');
         return false;
     }
@@ -535,7 +527,12 @@ async function _start() {
                 var wallets = items.wallets;
                 updateState({numberOfWallets: Object.keys(wallets).length});
                 var privKey = wallets[active].key;
-                startNimiq({walletSeed: privKey});
+
+                // Write active privKey in Nimiq's database
+                (new Nimiq.WalletStore()).then(walletStore => {
+                    var keys = Nimiq.KeyPair.fromHex(privKey);
+                    walletStore.put('keys', keys).then(startNimiq);
+                });
             });
         }
         else {
@@ -548,15 +545,17 @@ async function _start() {
 _start();
 
 function _stop() {
-    $.miner.stopWork();
-    $.network.disconnect();
+    if(typeof $ !== 'undefined' && !!$) {
+        $.miner.stopWork();
+        $.network.disconnect();
+    }
     $ = null;
 }
 
 async function importPrivateKey(privKey) {
     // TODO Validate privKey format
 
-    var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
+    var address = await Nimiq.KeyPair.fromHex(privKey).publicKey.toAddress();
         address = address.toUserFriendlyAddress(),
         name    = address.substr(5, 9);
 
