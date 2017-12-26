@@ -532,11 +532,11 @@ $buttonImportPrivKey.addEventListener('click', async e => {
 $buttonImportBetanet.addEventListener('click', e => {
     chrome.tabs.query({active: true}, tabs => {
         var tab = tabs[0];
-        if(tab.url === 'https://nimiq.com/betanet/') {
+        if(tab.url === 'https://nimiq.com/wallet/') {
             chrome.tabs.executeScript({file: "extract_betanet_key.js"});
         }
         else {
-            window.open('https://nimiq.com/betanet','_newtab');
+            window.open('https://nimiq.com/wallet','_newtab');
         }
     });
 });

@@ -76,14 +76,18 @@ function updateState(update) {
     chrome.runtime.sendMessage(update);
 }
 
+function _updateBalance() {
+    $.accounts.get($.wallet.address).then(account => _onBalanceChanged(account.balance));
+}
+
 function _onConsensusEstablished() {
     console.log('Consensus established');
     updateState({status: 'Consensus established'});
     updateState({targetHeight: 0});
 
     // Get current balance and initiate listener.
-    $.accounts.getBalance($.wallet.address).then(balance => _onBalanceChanged(balance));
-    $.accounts.on($.wallet.address, account => _onBalanceChanged(account.balance));
+    $.blockchain.on('head-changed', _updateBalance);
+    _updateBalance();
 
     // If we want to start mining.
     // $.miner.startWork();
@@ -109,18 +113,18 @@ function stopMining() {
 }
 
 function _onBalanceChanged(newBalance) {
-    console.log(`Balance is ${Nimiq.Policy.satoshisToCoins(newBalance.value)}.`);
+    console.log(`Balance is ${Nimiq.Policy.satoshisToCoins(newBalance)}.`);
     updateState({activeWallet: {
         name: state.activeWallet.name,
         address: state.activeWallet.address,
-        balance: Nimiq.Policy.satoshisToCoins(newBalance.value)
+        balance: Nimiq.Policy.satoshisToCoins(newBalance)
     }});
 }
 
-async function _onHeadChanged(triggeredManually) {
-    console.log(`Now at height #${$.blockchain.height}.`);
-    await analyseBlock($.blockchain.head, null, triggeredManually);
-    updateState({height: $.blockchain.height});
+async function _onHeadChanged(block, triggeredManually) {
+    console.log(`Now at height #${block.height}.`);
+    await analyseBlock(block, null, triggeredManually);
+    updateState({height: block.height});
 }
 
 function _onPeersChanged() {
@@ -134,16 +138,16 @@ async function _mempoolChanged() {
     var pendingTxs = [];
 
     for (var tx of txs) {
-        var sender   = (await tx.getSenderAddr()).toHex(),
-            receiver = tx.recipientAddr.toHex();
+        var sender   = tx.sender.toUserFriendlyAddress(),
+            receiver = tx.recipient.toUserFriendlyAddress();
 
         if([sender, receiver].includes(state.activeWallet.address)) {
             pendingTxs.push({
                 address : sender === state.activeWallet.address ? receiver : sender,
                 value: Nimiq.Policy.satoshisToCoins(tx.value),
-                type: sender === state.activeWallet.address ? 'sending' : 'receiving'
+                type: sender === state.activeWallet.address ? 'sending' : 'receiving',
                 // message: null, // TODO Fill when available
-                // fee: Nimiq.Policy.satoshisToCoins(tx.fee),
+                fee: Nimiq.Policy.satoshisToCoins(tx.fee),
                 // nonce: tx.nonce
             });
         }
@@ -159,19 +163,28 @@ function startNimiq(params) {
 
     var options = Object.assign({}, defaults, params);
 
-    Nimiq.init(async $ => {
+    Nimiq.init(async () => {
         console.log('Nimiq loaded. Connecting and establishing consensus.');
 
+        $ = {};
         window.$ = $;
+        $.consensus = await Nimiq.Consensus.light();
 
-        console.log('Your address: ' + $.wallet.address.toHex());
+        $.blockchain = $.consensus.blockchain;
+        $.accounts = $.blockchain.accounts;
+        $.mempool = $.consensus.mempool;
+        $.network = $.consensus.network;
+        $.wallet = await Nimiq.Wallet.getPersistent();
+        $.miner = new Nimiq.Miner($.blockchain, $.mempool, $.wallet.address);
+
+        console.log('Your address: ' + $.wallet.address.toUserFriendlyAddress());
 
         store.get('wallets', function(items) {
             var wallets = items.wallets;
 
             updateState({activeWallet: {
-                name: wallets[$.wallet.address.toHex()].name,
-                address: $.wallet.address.toHex(),
+                name: wallets[$.wallet.address.toUserFriendlyAddress()].name,
+                address: $.wallet.address.toUserFriendlyAddress(),
                 balance: state.activeWallet.balance
             }});
         });
@@ -191,8 +204,8 @@ function startNimiq(params) {
 
         await analyseHistory(analysedHeight + 1, $.blockchain.height);
 
-        $.blockchain.on('head-changed', () => _onHeadChanged());
-        _onHeadChanged(true);
+        $.blockchain.on('head-changed', (block) => _onHeadChanged(block));
+        _onHeadChanged($.blockchain.head, true);
 
         $.miner.on('hashrate-changed', () => {
             updateState({hashrate: $.miner.hashrate});
@@ -219,7 +232,7 @@ var store = chrome.storage.local;
 
 // Storage schema
 // {
-//     version: 2,
+//     version: 3,
 //     active: '<address>',
 //     wallets: {
 //         '<address>': {
@@ -252,7 +265,7 @@ async function updateStoreSchema() {
     switch(version) {
         case undefined:
             var schema = {
-                version: 2,
+                version: 3,
                 active: null,
                 wallets: {},
                 analysedHeight: 0,
@@ -269,7 +282,7 @@ async function updateStoreSchema() {
                 });
             });
             break;
-        case 1: {
+        case 1:
             // Update to version 2
             console.log('Updating storage to version 2');
             var wallets = Object.keys(await new Promise(function(resolve, reject) {
@@ -290,7 +303,19 @@ async function updateStoreSchema() {
                 });
             });
             // No break at the end to fall through to following updates
-        }
+        case 2:
+            // Update to version 3
+            // Delete everything, because Luna is not backwards-compatible
+            await new Promise(function(resolve, reject) {
+                store.clear(function() {
+                    if(chrome.runtime.lastError) console.error(runtime.lastError);
+                    else resolve();
+                });
+            });
+
+            // Initialize new schema
+            await updateStoreSchema();
+            // No break at the end to fall through to following updates
     }
 }
 
@@ -329,8 +354,8 @@ async function analyseBlock(block, address, triggeredManually) {
     if(block.transactionCount > 0) {
         for(var i = 0; i < block.transactions.length; i++) { // Cannot use .forEach here, as it is not possible to wait for anonymous functions
             var tx       = block.transactions[i],
-                sender   = (await tx.getSenderAddr()).toHex(),
-                receiver = tx.recipientAddr.toHex();
+                sender   = tx.sender.toUserFriendlyAddress(),
+                receiver = tx.recipient.toUserFriendlyAddress();
 
             if(addresses.includes(receiver)) {
                 let event = {
@@ -338,7 +363,8 @@ async function analyseBlock(block, address, triggeredManually) {
                     height: block.height,
                     type: 'received',
                     address: sender,
-                    value: Nimiq.Policy.satoshisToCoins(tx.value)
+                    value: Nimiq.Policy.satoshisToCoins(tx.value),
+                    fee: Nimiq.Policy.satoshisToCoins(tx.fee)
                 };
 
                 console.log('Found event for', receiver, event);
@@ -353,7 +379,8 @@ async function analyseBlock(block, address, triggeredManually) {
                     height: block.height,
                     type: 'sent',
                     address: receiver,
-                    value: Nimiq.Policy.satoshisToCoins(tx.value)
+                    value: Nimiq.Policy.satoshisToCoins(tx.value),
+                    fee: Nimiq.Policy.satoshisToCoins(tx.fee)
                 };
 
                 console.log('Found event for', sender, event);
@@ -365,20 +392,20 @@ async function analyseBlock(block, address, triggeredManually) {
     }
 
     // Check minerAddr
-    if(addresses.includes(block.minerAddr.toHex())) {
+    if(addresses.includes(block.minerAddr.toUserFriendlyAddress())) {
         let fees = block.transactions.reduce((acc, tx) => acc + tx.fee, 0);
 
         let event = {
             timestamp: block.timestamp,
             height: block.height,
             type: 'blockmined',
-            value: Nimiq.Policy.satoshisToCoins(Nimiq.Policy.BLOCK_REWARD + fees)
+            value: Nimiq.Policy.satoshisToCoins(Nimiq.Policy.blockRewardAt(block.height) + fees)
         };
 
-        console.log('Found event for', block.minerAddr.toHex(), event);
+        console.log('Found event for', block.minerAddr.toUserFriendlyAddress(), event);
         eventFound = true;
 
-        history[block.minerAddr.toHex()].unshift(event);
+        history[block.minerAddr.toUserFriendlyAddress()].unshift(event);
     }
 
     var storeUpdate = {};
@@ -406,7 +433,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
     console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
 
     // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
-    var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - ($.blockchain.path.length - 1));
+    var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - Nimiq.Policy.NUM_BLOCKS_VERIFICATION);
 
     if(expectedFromHeight < fromHeight) {
         var history = await new Promise(function(resolve, reject) {
@@ -426,8 +453,8 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         };
 
         for(address of addresses) {
-            var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
-            if(balance.value > 0 || balance.nonce > 0) {
+            var account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address));
+            if(account.balance > 0 || account.nonce > 0) {
                 console.log('Found event for', address, event);
                 history[address].unshift(event);
             }
@@ -492,7 +519,7 @@ function setUnreadEventsCount(count) {
 }
 
 async function _start() {
-    if(Nimiq._core) {
+    if(!!$) {
         console.error('Nimiq is already running. _stop() first.');
         return false;
     }
@@ -523,7 +550,6 @@ _start();
 function _stop() {
     $.miner.stopWork();
     $.network.disconnect();
-    Nimiq._core = null;
     $ = null;
 }
 
@@ -531,8 +557,8 @@ async function importPrivateKey(privKey) {
     // TODO Validate privKey format
 
     var address = await Nimiq.KeyPair.unserialize(Nimiq.BufferUtils.fromHex(privKey)).publicKey.toAddress();
-        address = address.toHex(),
-        name    = address.substring(0, 6);
+        address = address.toUserFriendlyAddress(),
+        name    = address.substr(5, 9);
 
     try {
         await new Promise(function(resolve, reject) {
@@ -569,9 +595,9 @@ async function importPrivateKey(privKey) {
     }
 
     if(state.activeWallet.address) { // Only analyse history if this is not the first imported wallet
-        var balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
+        var account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address));
 
-        if(balance.value > 0 || balance.nonce > 0) {
+        if(account.balance > 0 || account.nonce > 0) {
             state.analysingHistory.push(address);
             analyseHistory(0, $.blockchain.height, address);
         }
@@ -590,8 +616,8 @@ async function listWallets() {
 
     if(state.status === 'Consensus established') {
         for(let address in wallets) {
-            let balance = await $.accounts.getBalance(Nimiq.Address.fromHex(address));
-            wallets[address].balance = Nimiq.Policy.satoshisToCoins(balance.value);
+            let account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address));
+            wallets[address].balance = Nimiq.Policy.satoshisToCoins(account.balance);
         }
     }
     else {
@@ -684,26 +710,26 @@ async function sendTransaction(address, value) {
     }
 
     try {
-        address = new Nimiq.Address(Nimiq.BufferUtils.fromHex(address));
+        address = Nimiq.Address.fromUserFriendlyAddress(address);
     } catch (e) {
-        return "No valid address";
+        return "Not a valid address";
     }
 
     if (isNaN(value) || value <= 0) {
-        return "No valid value";
+        return "Not a valid value";
     }
 
-    var balance = await $.accounts.getBalance($.wallet.address);
+    var account = await $.accounts.get($.wallet.address);
 
     value = Nimiq.Policy.coinsToSatoshis(value);
 
     var fee = 0;
 
-    if (balance.value < value + fee) {
+    if (account.balance < value + fee) {
         return "Not enough funds";
     }
 
-    var tx = await $.wallet.createTransaction(address, value, fee, balance.nonce);
+    var tx = await $.wallet.createTransaction(address, value, fee, account.nonce);
 
     $.mempool.pushTransaction(tx);
 
