@@ -76,8 +76,9 @@ function updateState(update) {
     chrome.runtime.sendMessage(update);
 }
 
-function _updateBalance() {
-    $.accounts.get($.wallet.address).then(account => _onBalanceChanged(account.balance));
+async function _updateBalance() {
+    var account = await $.accounts.get($.wallet.address) || Nimiq.BasicAccount.INITIAL;
+    _onBalanceChanged(account.balance);
 }
 
 function _onConsensusEstablished() {
@@ -111,8 +112,8 @@ function startMining() {
 }
 
 function stopMining() {
-    $.miner.stopWork();
-    updateState({mining: $.miner.working});
+    if(typeof $ !== 'undefined' && !!$) $.miner.stopWork();
+    updateState({mining: $ && $.miner && $.miner.working});
     updateState({hashrate: 0});
 }
 
@@ -445,7 +446,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         };
 
         for(address of addresses) {
-            var account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address));
+            var account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address)) || Nimiq.BasicAccount.INITIAL;
             if(account.balance > 0 || account.nonce > 0) {
                 console.log('Found event for', address, event);
                 history[address].unshift(event);
@@ -526,19 +527,13 @@ async function _start() {
             store.get('wallets', function(items) {
                 var wallets = items.wallets;
                 updateState({numberOfWallets: Object.keys(wallets).length});
-                var privKey = wallets[active].key;
-
-                // Write active privKey in Nimiq's database
-                (new Nimiq.WalletStore()).then(walletStore => {
-                    var keys = Nimiq.KeyPair.fromHex(privKey);
-                    walletStore.put('keys', keys).then(startNimiq);
-                });
+                startNimiq();
             });
         }
         else {
             // Start basic Nimiq runtime to be able to access Nimiq subclasses
             console.log('Loading minimal Nimiq instance');
-            Nimiq.init($ => { window.$ = $; }, error => { console.error(error); });
+            Nimiq.init(null, error => { console.error(error); });
         }
     });
 }
@@ -546,7 +541,7 @@ _start();
 
 function _stop() {
     if(typeof $ !== 'undefined' && !!$) {
-        $.miner.stopWork();
+        stopMining();
         $.network.disconnect();
     }
     $ = null;
@@ -594,7 +589,7 @@ async function importPrivateKey(privKey) {
     }
 
     if(state.activeWallet.address) { // Only analyse history if this is not the first imported wallet
-        var account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address));
+        var account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address)) || Nimiq.BasicAccount.INITIAL;
 
         if(account.balance > 0 || account.nonce > 0) {
             state.analysingHistory.push(address);
@@ -615,7 +610,7 @@ async function listWallets() {
 
     if(state.status === 'Consensus established') {
         for(let address in wallets) {
-            let account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address));
+            let account = await $.accounts.get(Nimiq.Address.fromUserFriendlyAddress(address)) || Nimiq.BasicAccount.INITIAL;
             wallets[address].balance = Nimiq.Policy.satoshisToCoins(account.balance);
         }
     }
@@ -647,7 +642,12 @@ function switchWallet(address) {
                 }});
 
                 _stop();
-                _start();
+
+                // Write new active privKey in Nimiq's database
+                (new Nimiq.WalletStore()).then(walletStore => {
+                    var keys = Nimiq.KeyPair.fromHex(wallets[address].key);
+                    walletStore.put('keys', keys).then(_start);
+                });
             });
         }
     });
@@ -718,7 +718,7 @@ async function sendTransaction(address, value) {
         return "Not a valid value";
     }
 
-    var account = await $.accounts.get($.wallet.address);
+    var account = await $.accounts.get($.wallet.address) || Nimiq.BasicAccount.INITIAL;
 
     value = Nimiq.Policy.coinsToSatoshis(value);
 
