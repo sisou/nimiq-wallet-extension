@@ -24,6 +24,7 @@ To install for development, follow these instructions: https://developer.chrome.
 ## Changelog
 **v0.3.1**
 - Use Nimiq's robohash for identicons
+- Replace Dollar currency icon with "NIM" suffix
 
 **v0.3.0**
 - Update extension to work with the Luna testnet v3

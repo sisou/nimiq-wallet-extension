@@ -9,11 +9,11 @@
   "minimum_chrome_version": "58.0.0.0",
 
   "icons": {
-     "16": "app-icon-16x16.png",
-     "32": "app-icon-32x32.png",
-     "48": "app-icon-48x48.png",
-    "128": "app-icon-128x128.png",
-    "256": "app-icon-256x256.png"
+     "16": "app-icons/app-icon-16x16.png",
+     "32": "app-icons/app-icon-32x32.png",
+     "48": "app-icons/app-icon-48x48.png",
+    "128": "app-icons/app-icon-128x128.png",
+    "256": "app-icons/app-icon-256x256.png"
   },
 
   "background": {
