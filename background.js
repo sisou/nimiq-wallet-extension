@@ -324,7 +324,7 @@ async function analyseBlock(block, address, triggeredManually) {
         if(analysedHeight >= block.height) return;
     }
 
-    if(state.analysingHistory.length && !address) {
+    if(!$.consensus.established || (state.analysingHistory.length && !address)) {
         // Postpone general analysis of new blocks until specific wallet history analysis is finished
         state.postponedBlocks.push(block);
         console.log('Postponing analysis of block', block.height);
@@ -426,6 +426,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
     console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
 
     // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
+    // FIXME: While NUM_BLOCKS_VALIDATION must always be present, it's possible that even more blocks are available. Find a way to find that oldest full block
     var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - Nimiq.Policy.NUM_BLOCKS_VERIFICATION);
 
     if(expectedFromHeight < fromHeight) {
@@ -437,7 +438,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
 
         var addresses = address ? [address] : Object.keys(history);
 
-        var block = await $.blockchain.getBlock($.blockchain.path[0]);
+        var block = await $.blockchain.getBlockAt(fromHeight);
 
         let event = {
             timestamp: block.timestamp,
@@ -463,13 +464,9 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
         // setUnreadEventsCount('!');
     }
 
-    // Translate heights into path indices
-    var index   = ($.blockchain.path.length - 1) - ($.blockchain.height - fromHeight),
-        toIndex = ($.blockchain.path.length - 1) - ($.blockchain.height - toHeight);
-
-    while(index <= toIndex) {
-        await analyseBlock(await $.blockchain.getBlock($.blockchain.path[index]), address);
-        index++;
+    while(fromHeight <= toHeight) {
+        await analyseBlock(await $.blockchain.getBlockAt(fromHeight), address);
+        fromHeight++;
     }
 
     if(address && state.analysingHistory.includes(address)) {
