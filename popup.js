@@ -35,7 +35,7 @@ var $buttonCopyAddress        = document.getElementById('buttonActiveWalletCopyA
     $buttonCloseImportWallets = document.getElementById('button-close-import-wallets'),
     $inputPrivKey             = document.getElementById('input-privKey'),
     $buttonImportPrivKey      = document.getElementById('button-import-privKey'),
-    $buttonImportBetanet      = document.getElementById('button-import-betanet'),
+    $buttonImportTestnet      = document.getElementById('button-import-testnet'),
     $buttonNewWallet          = document.getElementById('button-create-new-wallet');
 
 // Helper functions
@@ -535,11 +535,11 @@ $buttonImportPrivKey.addEventListener('click', async e => {
     }
     $buttonCloseImportWallets.click();
 });
-$buttonImportBetanet.addEventListener('click', e => {
+$buttonImportTestnet.addEventListener('click', e => {
     chrome.tabs.query({active: true}, tabs => {
         var tab = tabs[0];
         if(tab.url === 'https://nimiq.com/wallet/') {
-            chrome.tabs.executeScript({file: "extract_betanet_key.js"});
+            chrome.tabs.executeScript({file: "extract_testnet_key.js"});
         }
         else {
             window.open('https://nimiq.com/wallet','_newtab');
