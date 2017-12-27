@@ -357,7 +357,7 @@ header nav button:hover {
     position: relative;
 }
 
-.wallet-identicon canvas {
+.wallet-identicon svg {
     border-radius: 8px;
 }
 

@@ -83,7 +83,13 @@ function setStatusIndicator(status) {
 setStatusIndicator(state.status);
 
 function createIdenticon(hash) {
-    return blockies.create({seed: hash, size: 8, scale: 5});
+    var el = document.createElement('div');
+    el.setAttribute('height', '40px');
+    el.setAttribute('width', '40px');
+
+    Robohash.render(hash, el);
+
+    return el;
 }
 $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
 
