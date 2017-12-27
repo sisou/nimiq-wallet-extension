@@ -22,6 +22,9 @@ A contact list and creating cashlinks are coming soon!
 To install for development, follow these instructions: https://developer.chrome.com/extensions/getstarted#unpacked
 
 ## Changelog
+**v0.3.1**
+- Use Nimiq's robohash for identicons
+
 **v0.3.0**
 - Update extension to work with the Luna testnet v3
 
