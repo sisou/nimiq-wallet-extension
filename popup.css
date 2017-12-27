@@ -462,6 +462,12 @@ header nav button:hover {
     padding: 0.4em 0;
 }
 
+#inputMiningThreads {
+    width: 3em;
+    padding: 0.3em;
+    text-align: right;
+}
+
 #historyPlaceholder {
     margin-top: 2em;
     text-transform: uppercase;

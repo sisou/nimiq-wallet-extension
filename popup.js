@@ -29,6 +29,7 @@ var $buttonCopyAddress        = document.getElementById('buttonActiveWalletCopyA
     $inputTxValue             = document.getElementById('input-tx-value'),
     $buttonSendTx             = document.getElementById('button-send-tx'),
     $buttonToggleMining       = document.getElementById('buttonToggleMining'),
+    $inputMiningThreads       = document.getElementById('inputMiningThreads'),
     $buttonShowMyWallets      = document.getElementById('buttonShowMyWallets'),
     $buttonCloseMyWallets     = document.getElementById('button-close-my-wallets'),
     $buttonShowImportWallets  = document.getElementById('button-show-import-wallets'),
@@ -104,6 +105,7 @@ function setMinerStatus(mining) {
     }
 }
 setMinerStatus(state.mining);
+$inputMiningThreads.value = state.threads;
 
 function formatHashrate(value) {
     var resultValue = 0;
@@ -353,6 +355,7 @@ async function messageReceived(update) {
             case 'targetHeight': handleTargetHeight(state.targetHeight); break;
             case 'peers':        $peers.innerText        = state.peers; break;
             case 'mining':       setMinerStatus(state.mining); break;
+            case 'threads':      $inputMiningThreads.value = state.threads; break;
             case 'hashrate':     $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate)); break;
             case 'pendingTxs':   renderPendingTxs(state.pendingTxs); break;
         }
@@ -457,6 +460,10 @@ $buttonSendTx.addEventListener('click', sendTransaction);
 $buttonToggleMining.addEventListener('click', e => {
     if(!state.mining) bgPage.startMining();
     else bgPage.stopMining();
+});
+
+$inputMiningThreads.addEventListener('change', e => {
+    bgPage.setMiningThreads($inputMiningThreads.value);
 });
 
 $historyList.addEventListener('click', e => {

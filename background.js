@@ -65,6 +65,7 @@ var state = {
     peers: 0,
     status: 'Not connected',
     mining: false,
+    threads: 1,
     hashrate: 0,
     pendingTxs: [],
     analysingHistory: [], // Store all addresses that are currently being analysed
@@ -115,6 +116,12 @@ function stopMining() {
     if(typeof $ !== 'undefined' && !!$) $.miner.stopWork();
     updateState({mining: $ && $.miner && $.miner.working});
     updateState({hashrate: 0});
+}
+
+function setMiningThreads(threads) {
+    threads = Math.min(threads, navigator.hardwareConcurrency);
+    $.miner.threads = threads;
+    updateState({threads: $.miner.threads});
 }
 
 function _onBalanceChanged(newBalance) {
@@ -177,6 +184,7 @@ function startNimiq() {
         $.network = $.consensus.network;
         $.wallet = await Nimiq.Wallet.getPersistent();
         $.miner = new Nimiq.Miner($.blockchain, $.mempool, $.wallet.address);
+        updateState({threads: $.miner.threads});
 
         console.log('Your address: ' + $.wallet.address.toUserFriendlyAddress());
 
