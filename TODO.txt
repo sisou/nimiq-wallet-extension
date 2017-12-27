@@ -1,0 +1,7 @@
+Robohash identicons
+Setting the threads for the miner
+Miner autostart (configurable via settings)
+Fetching history from nimiq.watch
+Adding Cashlinks
+Contact list
+Encryption of stored private keys (locking)
