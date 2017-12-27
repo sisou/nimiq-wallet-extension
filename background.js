@@ -476,7 +476,7 @@ async function analyseHistory(expectedFromHeight, toHeight, address) {
 
     // Process any block analysis that was postponed during the run
     if(!state.analysingHistory.length)
-        while(block = state.postponedBlocks.shift()) await analyseBlock(block);
+        while(block = state.postponedBlocks.shift()) await analyseBlock(block, null, true);
 }
 
 async function getHistory(address, page) {
