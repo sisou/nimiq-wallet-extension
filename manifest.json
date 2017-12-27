@@ -4,7 +4,7 @@
   "name": "NIMA - Nimiq Wallet Manager",
   "short_name": "NIMA",
   "description": "Manage your Nimiq wallets directly in your browser.",
-  "version": "0.2.3",
+  "version": "0.3.0",
 
   "minimum_chrome_version": "58.0.0.0",
 
@@ -28,10 +28,10 @@
   },
 
   "incognito": "split",
-  "content_security_policy": "script-src 'self' https://cdn.nimiq.com; object-src 'self'",
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://cdn.nimiq.com; object-src 'self'",
   "permissions": [
     "storage",
     "unlimitedStorage",
-    "https://nimiq.com/betanet/"
+    "https://nimiq.com/wallet/"
   ]
 }
