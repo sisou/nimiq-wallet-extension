@@ -111,7 +111,7 @@ function startMining() {
 }
 
 function stopMining() {
-    if(typeof $ !== 'undefined' && !!$) $.miner.stopWork();
+    if(typeof $ !== 'undefined' && !!$ && $.miner) $.miner.stopWork();
     updateState({mining: $ && $.miner && $.miner.working});
     updateState({hashrate: 0});
 }
@@ -166,14 +166,12 @@ async function _mempoolChanged() {
     updateState({pendingTxs: pendingTxs});
 }
 
-function startNimiq() {
+async function startNimiq() {
     updateState({status: 'Connecting'});
 
-    Nimiq.init(async () => {
-        console.log('Nimiq loaded. Connecting and establishing consensus.');
+    try {
+        console.log('Connecting and establishing consensus.');
 
-        $ = {};
-        window.$ = $;
         $.consensus = await Nimiq.Consensus.light();
 
         $.blockchain = $.consensus.blockchain;
@@ -218,10 +216,10 @@ function startNimiq() {
         _mempoolChanged();
 
         $.network.connect();
-    }, function(error) {
+    } catch(error) {
         updateState({status: 'Not connected'});
         console.error(error);
-    });
+    }
 }
 
 function messageReceived(msg) {
@@ -518,39 +516,34 @@ function setUnreadEventsCount(count) {
 
 async function _start() {
     if(typeof $ !== 'undefined' && !!$) {
-        console.error('Nimiq is already running. _stop() first.');
+        console.error('Nimiq is already running.');
         return false;
     }
 
     await updateStoreSchema();
 
-    store.get('active', function(items) {
-        var active = items.active;
+    console.log('Loading Nimiq instance');
+    Nimiq.init(() => {
+        $ = {};
+        window.$ = $;
 
-        if(active) {
-            console.log('Loading active wallet', active);
-            store.get('wallets', function(items) {
-                var wallets = items.wallets;
-                updateState({numberOfWallets: Object.keys(wallets).length});
-                startNimiq();
-            });
-        }
-        else {
-            // Start basic Nimiq runtime to be able to access Nimiq subclasses
-            console.log('Loading minimal Nimiq instance');
-            Nimiq.init(null, error => { console.error(error); });
-        }
+        store.get('active', function(items) {
+            var active = items.active;
+
+            if(active) {
+                console.log('Loading active wallet', active);
+                store.get('wallets', function(items) {
+                    var wallets = items.wallets;
+                    updateState({numberOfWallets: Object.keys(wallets).length});
+                    startNimiq();
+                });
+            }
+        });
+    }, error => {
+        console.error(error);
     });
 }
 _start();
-
-function _stop() {
-    if(typeof $ !== 'undefined' && !!$) {
-        stopMining();
-        $.network.disconnect();
-    }
-    $ = null;
-}
 
 async function importPrivateKey(privKey) {
     // TODO Validate privKey format
@@ -633,11 +626,13 @@ async function listWallets() {
 function switchWallet(address) {
     if(state.analysingHistory.includes(address)) return false;
 
+    stopMining();
+
     store.set({active: address}, function() {
         if(chrome.runtime.lastError) console.error(runtime.lastError);
         else {
             console.log("Activated", address);
-            store.get('wallets', function(items) {
+            store.get('wallets', async function(items) {
                 var wallets = items.wallets;
 
                 updateState({activeWallet: {
@@ -646,13 +641,22 @@ function switchWallet(address) {
                     balance: 'loading...'
                 }});
 
-                _stop();
-
                 // Write new active privKey in Nimiq's database
-                (new Nimiq.WalletStore()).then(walletStore => {
-                    var keys = Nimiq.KeyPair.fromHex(wallets[address].key);
-                    walletStore.put('keys', keys).then(_start);
-                });
+                var walletStore = await new Nimiq.WalletStore()
+                var keys = Nimiq.KeyPair.fromHex(wallets[address].key);
+                await walletStore.put('keys', keys)
+
+                if(Object.keys(wallets).length > 1) {
+                    // Initialize new wallet only
+                    $.wallet = await Nimiq.Wallet.getPersistent();
+                    console.log('Your address: ' + $.wallet.address.toUserFriendlyAddress());
+                    if($.consensus.established) _updateBalance();
+                    $.miner = new Nimiq.Miner($.blockchain, $.mempool, $.wallet.address);
+                    updateState({threads: $.miner.threads});
+                }
+                else {
+                    startNimiq();
+                }
             });
         }
     });

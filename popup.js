@@ -83,7 +83,6 @@ if(state.status !== 'Consensus established' && state.numberOfWallets > 0) {
     $loadingScreen.classList.add('show-instant');
     setLoadingScreen();
 }
-state.restarting = false;
 
 $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')');
 $name.innerText            = state.activeWallet.name;
@@ -302,9 +301,6 @@ updateHistory();
 if(state.status === 'Consensus established') bgPage.setUnreadEventsCount();
 
 function handleStatus(status) {
-    if(state.restarting && status === 'Consensus lost')
-        state.restarting = false;
-
     $status.innerText = status;
     setLoadingScreen();
     setStatusIndicator(status);
@@ -411,10 +407,10 @@ function switchWallet(address) {
         return false;
     }
 
-    if(state.activeWallet.address)
-        state.restarting = true;
-
-    $loadingScreen.classList.add('show-instant');
+    if(state.numberOfWallets < 2) {
+        $loadingScreen.classList.add('show-instant');
+        setLoadingScreen();
+    }
 
     return true;
 }
