@@ -12,8 +12,8 @@ var $address            = document.getElementById('activeWalletAddress'),
     $status             = document.getElementById('status'),
     $height             = document.getElementById('height'),
     $loadingScreen      = document.getElementById('loading-screen'),
-    $loadingHeight      = document.getElementById('loading-height'),
     $loadingProgress    = document.getElementById('loading-progress-bar'),
+    $loadingStatus      = document.getElementById('loading-status'),
     $peers              = document.getElementById('peers'),
     $walletManagement   = document.getElementById('wallet-management'),
     $walletImport       = document.getElementById('wallet-import'),
@@ -55,7 +55,34 @@ function formatBalance(value) {
 var bgPage = chrome.extension.getBackgroundPage(),
     state  = bgPage.state;
 
-if(state.status !== 'Consensus established' && state.numberOfWallets > 0) $loadingScreen.classList.add('show-instant');
+function setLoadingScreen() {
+    $loadingStatus.innerText = state.status;
+    var progress = 0; // %
+    switch(state.status) {
+        case 'Synchronizing':
+        case 'Downloading chain':
+            progress = 10; break;
+        case 'Verifying chain':
+            progress = 30; break;
+        case 'Downloading accounts':
+            progress = 50; break;
+        case 'Verifying accounts':
+            progress = 70; break;
+        case 'Storing data':
+            progress = 90; break;
+        case 'Consensus established':
+            progress = 100;
+            $loadingScreen.classList.remove('show-instant');
+            break;
+    }
+
+    $loadingProgress.style.width = progress + '%';
+}
+
+if(state.status !== 'Consensus established' && state.numberOfWallets > 0) {
+    $loadingScreen.classList.add('show-instant');
+    setLoadingScreen();
+}
 state.restarting = false;
 
 $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')');
@@ -64,7 +91,6 @@ $address.innerText         = state.activeWallet.address;
 $balance.innerText         = formatBalance(state.activeWallet.balance);
 $status.innerText          = state.status;
 $height.innerText          = state.height;
-// $targetHeight.innerText    = state.targetHeight;
 $peers.innerText           = state.peers;
 
 if(state.numberOfWallets === 0) $walletImport.classList.add('show-instant');
@@ -73,12 +99,13 @@ function setStatusIndicator(status) {
     if(status === 'Consensus established') {
         $statusIndicator.classList.add('green');
     }
-    else if(status === 'Syncing') {
+    else if(status === 'Consensus lost' || status === 'Not connected') {
+        $statusIndicator.classList.remove('green', 'yellow');
+        // Set to default red
+    }
+    else { // All syncing cases
         $statusIndicator.classList.remove('green');
         $statusIndicator.classList.add('yellow');
-    }
-    else {
-        $statusIndicator.classList.remove('green', 'yellow');
     }
 }
 setStatusIndicator(state.status);
@@ -279,6 +306,7 @@ function handleStatus(status) {
         state.restarting = false;
 
     $status.innerText = status;
+    setLoadingScreen();
     setStatusIndicator(status);
     updateWalletList();
 }
@@ -289,31 +317,7 @@ function handleHeight(height) {
         updateHistory();
         updateWalletList();
     }
-    else {
-        // TODO Check if consensus established is triggered before the last height updateWalletList
-        // If not, the above conditional section has to be triggered manually
-
-        $loadingHeight.innerText = height;
-
-        // Set loading-bar progress
-        $loadingProgress.style.width = ((height - state.startHeight) / (state.targetHeight - state.startHeight) * 100) + '%';
-    }
 }
-
-function handleTargetHeight(targetHeight) {
-    if(targetHeight > 0) {
-        state.startHeight = state.startHeight || state.height;
-        document.getElementById('loading-targetHeight').innerText = '/' + targetHeight;
-    }
-    else if(!state.restarting) {
-        delete state.startHeight;
-        handleHeight(state.height);
-        $loadingScreen.classList.remove('show-instant');
-        bgPage.setUnreadEventsCount();
-        document.getElementById('loading-targetHeight').innerText = '';
-    }
-}
-if(state.targetHeight > 0) handleTargetHeight(state.targetHeight);
 
 // Listen for updates from the background script
 async function messageReceived(update) {
@@ -352,7 +356,6 @@ async function messageReceived(update) {
                                  break;
             case 'status':       handleStatus(state.status); break;
             case 'height':       handleHeight(state.height); break;
-            case 'targetHeight': handleTargetHeight(state.targetHeight); break;
             case 'peers':        $peers.innerText        = state.peers; break;
             case 'mining':       setMinerStatus(state.mining); break;
             case 'threads':      $inputMiningThreads.value = state.threads; break;

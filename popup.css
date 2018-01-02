@@ -567,6 +567,7 @@ li {
     width: 0%;
     border-radius: 2px;
     background: #042146;
+    transition: width 0.5s ease-out;
 }
 
 #loading-text {

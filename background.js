@@ -61,7 +61,6 @@ var state = {
     },
     numberOfWallets: 0,
     height: 0,
-    targetHeight: 0,
     peers: 0,
     status: 'Not connected',
     mining: false,
@@ -85,7 +84,6 @@ async function _updateBalance() {
 function _onConsensusEstablished() {
     console.log('Consensus established');
     updateState({status: 'Consensus established'});
-    updateState({targetHeight: 0});
 
     // Get current balance and initiate listener.
     $.blockchain.on('head-changed', _updateBalance);
@@ -198,10 +196,12 @@ function startNimiq() {
             }});
         });
 
-        $.consensus.on('syncing', (targetHeight) => {
-            updateState({status: 'Syncing'});
-            updateState({targetHeight: targetHeight});
-        });
+        $.consensus.on('syncing', () => { updateState({status: 'Synchronizing'}); });
+        $.consensus.on('sync-chain-proof', () => { updateState({status: 'Downloading chain'}); });
+        $.consensus.on('verify-chain-proof', () => { updateState({status: 'Verifying chain'}); });
+        $.consensus.on('sync-accounts-tree', () => { updateState({status: 'Downloading accounts'}); });
+        $.consensus.on('verify-accounts-tree', () => { updateState({status: 'Verifying accounts'}); });
+        $.consensus.on('sync-finalize', () => { updateState({status: 'Storing data'}); });
         $.consensus.on('established', () => _onConsensusEstablished());
         $.consensus.on('lost', () => _onConsensusLost());
 
@@ -431,11 +431,11 @@ async function analyseBlock(block, address, triggeredManually) {
 async function analyseHistory(expectedFromHeight, toHeight, address) {
     if(expectedFromHeight > toHeight) return;
 
-    console.log('Analysing history from', expectedFromHeight, 'to', toHeight);
-
     // Make sure that expectedFromHeight is available in our path, otherwise start at lowest available height
     // FIXME: While NUM_BLOCKS_VALIDATION must always be present, it's possible that even more blocks are available. Find a way to find that oldest full block
     var fromHeight = Math.max(expectedFromHeight, $.blockchain.height - Nimiq.Policy.NUM_BLOCKS_VERIFICATION);
+
+    console.log('Analysing history from', expectedFromHeight, 'to', toHeight, 'starting at', fromHeight);
 
     if(expectedFromHeight < fromHeight) {
         var history = await new Promise(function(resolve, reject) {
