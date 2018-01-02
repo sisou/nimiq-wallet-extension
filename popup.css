@@ -52,6 +52,7 @@ button.close {
     float: right;
     padding: 0.05em 0.3em 0 0.3em;
     font-size: 1.3em;
+    font-family: "Fira Mono";
 }
 
 button.centered {
@@ -118,6 +119,7 @@ body {
     font-size: 100%;
     width: 360px;
     height: 500px;
+    overflow: hidden;
     background: snow;
     color: #042146;
     margin: 0;

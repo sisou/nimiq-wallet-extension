@@ -52,8 +52,14 @@ function formatBalance(value) {
 }
 
 // Set up initial values
-var bgPage = chrome.extension.getBackgroundPage(),
-    state  = bgPage.state;
+var bgPage = chrome.extension.getBackgroundPage();
+
+if(Array.isArray(bgPage) || bgPage === null) {
+    alert('The NIMA extension is not supported in Firefox Private Mode!');
+    window.close();
+}
+
+var state  = bgPage.state;
 
 function setLoadingScreen() {
     $loadingStatus.innerText = state.status;
@@ -338,8 +344,6 @@ async function messageReceived(update) {
             if(state.balance === 'loading...' && state.status !== 'Consensus established')
                 return;
         }
-
-        Object.assign(state, update);
 
         switch(key) {
             case 'numberOfWallets': $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')'); break;

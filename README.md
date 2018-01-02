@@ -9,7 +9,7 @@ A history of your recent transactions and mined blocks is available for each wal
 
 The extension also supports mining, so you can mine Nimiq whenever your browser is running, without having to visit the testnet webpage.
 
-> Developed for Chrome, but may also work in Firefox, Opera and other WebKit-based browsers.
+> Developed for Chrome and Firefox, but may also work in Opera and other WebKit-based browsers.
 
 ## Screenshots
 ![Main screen](assets/screenshots/screenshot2.png?raw=true)
@@ -20,7 +20,8 @@ The extension also supports mining, so you can mine Nimiq whenever your browser 
 To install for development, follow these instructions: https://developer.chrome.com/extensions/getstarted#unpacked
 
 ## Changelog
-**v0.3.3**
+**v0.4.0**
+- Adapt for Firefox
 - Enable quick wallet switching without a network reconnect
 - Fix displayed status feedback during loading
 
