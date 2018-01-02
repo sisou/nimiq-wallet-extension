@@ -22,6 +22,10 @@ A contact list and creating cashlinks are coming soon!
 To install for development, follow these instructions: https://developer.chrome.com/extensions/getstarted#unpacked
 
 ## Changelog
+**v0.3.3**
+- Enable quick wallet switching without a network reconnect
+- Fix displayed status feedback during loading
+
 **v0.3.2**
 - Fix wrong icon path in manifest file
 

@@ -4,14 +4,16 @@
   "name": "NIMA - Nimiq Wallet Manager",
   "short_name": "NIMA",
   "description": "Manage your Nimiq wallets directly in your browser.",
-  "version": "0.3.2",
+  "version": "0.3.3",
 
   "minimum_chrome_version": "58.0.0.0",
+  "minimum_firefox_version": "48.0",
 
   "icons": {
      "16": "app-icons/app-icon-16x16.png",
      "32": "app-icons/app-icon-32x32.png",
      "48": "app-icons/app-icon-48x48.png",
+     "96": "app-icons/app-icon-96x96.png",
     "128": "app-icons/app-icon-128x128.png",
     "256": "app-icons/app-icon-256x256.png"
   },
