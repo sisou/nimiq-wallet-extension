@@ -548,7 +548,7 @@ $buttonImportTestnet.addEventListener('click', e => {
             chrome.tabs.executeScript({file: "extract_testnet_key.js"});
         }
         else {
-            window.open('https://nimiq.com/wallet','_newtab');
+            chrome.tabs.create({ url: 'https://nimiq.com/wallet' });
         }
     });
 });

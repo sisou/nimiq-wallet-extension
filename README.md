@@ -7,9 +7,7 @@ This extension lets you manage all your Nimiq wallets directly in your browser. 
 
 A history of your recent transactions and mined blocks is available for each wallet.
 
-The extension also supports mining, so you can mine Nimiq whenever your browser is running, without having to visit the betanet webpage.
-
-A contact list and creating cashlinks are coming soon!
+The extension also supports mining, so you can mine Nimiq whenever your browser is running, without having to visit the testnet webpage.
 
 > Developed for Chrome, but may also work in Firefox, Opera and other WebKit-based browsers.
 
