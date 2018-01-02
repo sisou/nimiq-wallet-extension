@@ -347,16 +347,16 @@ async function messageReceived(update) {
 
         switch(key) {
             case 'numberOfWallets': $buttonShowMyWallets.setAttribute('title', 'My Wallets (' + state.numberOfWallets + ')'); break;
-            case 'activeWallet': $name.innerText         = state.activeWallet.name;
-                                 $address.innerText      = state.activeWallet.address;
-                                 $balance.innerText      = formatBalance(state.activeWallet.balance);
+            case 'activeWallet': $name.innerText    = state.activeWallet.name;
+                                 $address.innerText = state.activeWallet.address;
+                                 $balance.innerText = formatBalance(state.activeWallet.balance);
                                  $identicon.replaceChild(createIdenticon(state.activeWallet.address), $identicon.firstChild);
                                  updateHistory();
                                  updateWalletList();
                                  break;
             case 'status':       handleStatus(state.status); break;
             case 'height':       handleHeight(state.height); break;
-            case 'peers':        $peers.innerText        = state.peers; break;
+            case 'peers':        $peers.innerText = state.peers; break;
             case 'mining':       setMinerStatus(state.mining); break;
             case 'threads':      $inputMiningThreads.value = state.threads; break;
             case 'hashrate':     $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate)); break;
