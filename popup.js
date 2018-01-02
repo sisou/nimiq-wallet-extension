@@ -160,7 +160,7 @@ function formatHashrate(value) {
     }
 
     resultValue = Math.round(resultValue * 100) / 100;
-    return resultValue + " " + resultUnit;
+    return resultValue + ' ' + resultUnit;
 }
 $buttonToggleMining.setAttribute('data-hashrate', formatHashrate(state.hashrate));
 
@@ -317,7 +317,7 @@ function handleHeight(height) {
 
 // Listen for updates from the background script
 async function messageReceived(update) {
-    console.log("message received:", update);
+    console.log('Message received:', update);
 
     var key = Object.keys(update)[0];
 
@@ -545,7 +545,7 @@ $buttonImportTestnet.addEventListener('click', e => {
     chrome.tabs.query({active: true}, tabs => {
         var tab = tabs[0];
         if(tab.url === 'https://nimiq.com/wallet/') {
-            chrome.tabs.executeScript({file: "extract_testnet_key.js"});
+            chrome.tabs.executeScript({file: '/extract_testnet_key.js'});
         }
         else {
             chrome.tabs.create({ url: 'https://nimiq.com/wallet' });
